@@ -61,7 +61,7 @@ namespace jurbano.Allcea.Cli
                     estimator = new UniformEstimator(100);
                     break;
                 default:
-                    Console.Error.WriteLine("'" + estimatorName + "' is not a valid estimator name. See 'allcea-" + Allcea.VERSION + " estimate -h'.");
+                    Console.Error.WriteLine("'" + estimatorName + "' is not a valid estimator name. See '" + Allcea.CLI_NAME_AND_VERSION + " estimate -h'.");
                     Environment.Exit(1);
                     break;
             }

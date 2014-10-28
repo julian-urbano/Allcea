@@ -25,6 +25,7 @@ namespace jurbano.Allcea
     public class Allcea
     {
         public const string VERSION = "1.0";
+        public const string CLI_NAME_AND_VERSION = "allcea-" + Allcea.VERSION;
         public const string COPYRIGHT_NOTICE =
             "Allcea " + Allcea.VERSION + "  Copyright (C) 2014  Julian Urbano <urbano.julian@gmail.com>"
             + "\nThis program comes with ABSOLUTELY NO WARRANTY."
@@ -49,7 +50,7 @@ namespace jurbano.Allcea
                     //case "next": break;
                     //case "simulate": break;
                     default:
-                        Console.Error.WriteLine("'" + commandName + "' is not a valid allcea-" + Allcea.VERSION + " command. See 'allcea-" + Allcea.VERSION + " -h'.");
+                        Console.Error.WriteLine("'" + commandName + "' is not a valid Allcea command. See '" + Allcea.CLI_NAME_AND_VERSION + " -h'.");
                         Environment.Exit(1);
                         break;
                 }
@@ -64,13 +65,13 @@ namespace jurbano.Allcea
                     Parser parser = new BasicParser();
                     CommandLine cmd = parser.Parse(options, args.Skip(1).ToArray());
                     // If we have extra CLI options the Parse method doesn't throw exception. Handle here
-                    if (cmd.Args==null || cmd.Args.Length != 0) {
+                    if (cmd.Args == null || cmd.Args.Length != 0) {
                         throw new ParseException("Unused option(s): " + string.Join(",", cmd.Args));
                     }
                     // Run command
                     command.Run(cmd);
                 } catch (Exception e) {
-                    Allcea.PrintUsage(e.Message,commandName, options, command.OptionsFooter);
+                    Allcea.PrintUsage(e.Message, commandName, options, command.OptionsFooter);
                     Environment.Exit(1);
                 }
             } else {
@@ -85,7 +86,7 @@ namespace jurbano.Allcea
                 "<command> [-h] [...]",
                 "command  the command to run.\n"
                 + "-h       shows this help message.",
-                "The available commands are (run 'allcea-" + Allcea.VERSION + " <command> -h' for specific help):"
+                "The available commands are (run '" + Allcea.CLI_NAME_AND_VERSION + " <command> -h' for specific help):"
                 + "\n  estimate  to estimate relevance judgments."
                 //+ "\n  evaluate  to evaluate systems with estimated judgments."
                 //+ "\n  next      to obtain the most informative documents to judge next."
@@ -110,7 +111,7 @@ namespace jurbano.Allcea
                 sb.AppendLine(msg);
                 sb.AppendLine();
             }
-            sb.AppendLine("usage: allcea-" + Allcea.VERSION + " " + usageOptions);
+            sb.AppendLine("usage: " + Allcea.CLI_NAME_AND_VERSION + " " + usageOptions);
             sb.AppendLine();
             sb.AppendLine(options);
             if (!String.IsNullOrWhiteSpace(footer)) {
