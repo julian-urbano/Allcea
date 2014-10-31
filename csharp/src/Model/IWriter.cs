@@ -13,22 +13,18 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with this program.  If not, see http://www.gnu.org/licenses/.
 
-namespace jurbano.Allcea.Estimation
-{
-    [global::System.Diagnostics.DebuggerDisplay("Query:{Query}, Doc:{Document}, E={Expectation}, Var={Variance}")]
-    public class Estimate
-    {
-        public string Query { get; protected set; }
-        public string Document { get; protected set; }
-        public double Expectation { get; protected set; }
-        public double Variance { get; protected set; }
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using System.IO;
+using jurbano.Allcea.Model;
 
-        public Estimate(string query, string doc, double e, double var)
-        {
-            this.Query = query;
-            this.Document = doc;
-            this.Expectation = e;
-            this.Variance = var;
-        }
+namespace jurbano.Allcea.Model
+{
+    public interface IWriter<T>
+    {
+        void Write(TextWriter tw, IEnumerable<T> ts);
     }
 }

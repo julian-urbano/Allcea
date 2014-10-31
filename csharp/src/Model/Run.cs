@@ -14,26 +14,25 @@
 // along with this program.  If not, see http://www.gnu.org/licenses/.
 
 using System;
-using jurbano.Allcea.Model;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
 
-namespace jurbano.Allcea.Estimation
+namespace jurbano.Allcea.Model
 {
-    [global::System.Diagnostics.DebuggerDisplay("MaxRelevance={MaxRelevance}")]
-    public class UniformEstimator : IEstimator
+    [global::System.Diagnostics.DebuggerDisplay("System:{System}, Quert:{Query}, Documents={Documents.Length}")]
+    public class Run
     {
-        public int MaxRelevance { get; protected set; }
+        public string System { get; protected set; }
+        public string Query { get; protected set; }
+        public string[] Documents { get; protected set; }
 
-        public UniformEstimator(int maxrelevance)
+        public Run(string system, string query, IEnumerable<string> docs)
         {
-            if (maxrelevance < 1) {
-                throw new ArgumentException("The maximum relevance level cannot be less than 1.");
-            }
-            this.MaxRelevance = maxrelevance;
-        }
-
-        public Estimate Estimate(string query, string doc)
-        {
-            return new Estimate(query, doc, this.MaxRelevance / 2.0, (Math.Pow(this.MaxRelevance + 1, 2) - 1.0) / 12.0);
+            this.System = system;
+            this.Query = query;
+            this.Documents = docs.ToArray();
         }
     }
 }
