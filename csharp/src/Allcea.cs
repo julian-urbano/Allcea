@@ -34,6 +34,8 @@ namespace jurbano.Allcea
 
         public static void Main(string[] args)
         {
+            //args = @"estimate -e uniform -i ..\..\..\etc\runs.txt".Split(' ');
+
             if (args.Length > 0) {
                 // Check CLI command name
                 string commandName = args[0].ToLower();
@@ -54,25 +56,29 @@ namespace jurbano.Allcea
                         Environment.Exit(1);
                         break;
                 }
+                // Parse CLI options
                 Options options = command.Options;
                 // help? Cannot wait to parse CLI options because it will throw exception before
                 if (options.HasOption("h") && args.Contains("-h")) {
                     Allcea.PrintUsage(null, commandName, options, command.OptionsFooter);
-                    Environment.Exit(0);
-                }
-                // Parse CLI options
-                try {
-                    Parser parser = new BasicParser();
-                    CommandLine cmd = parser.Parse(options, args.Skip(1).ToArray());
-                    // If we have extra CLI options the Parse method doesn't throw exception. Handle here
-                    if (cmd.Args == null || cmd.Args.Length != 0) {
-                        throw new ParseException("Unused option(s): " + string.Join(",", cmd.Args));
+                } else {
+                    try {
+                        Parser parser = new BasicParser();
+                        CommandLine cmd = parser.Parse(options, args.Skip(1).ToArray());
+                        // If we have extra CLI options the Parse method doesn't throw exception. Handle here
+                        if (cmd.Args == null || cmd.Args.Length != 0) {
+                            throw new ParseException("Unused option(s): " + string.Join(",", cmd.Args));
+                        }
+                        // Run command
+                        command.CheckOptions(cmd);
+                        command.Run();
+                    } catch (ParseException pe) {
+                        Allcea.PrintUsage(pe.Message, commandName, options, command.OptionsFooter);
+                        Environment.Exit(1);
+                    } catch (Exception ex) {
+                        Console.Error.WriteLine(ex.Message);
+                        Environment.Exit(1);
                     }
-                    // Run command
-                    command.Run(cmd);
-                } catch (Exception e) {
-                    Allcea.PrintUsage(e.Message, commandName, options, command.OptionsFooter);
-                    Environment.Exit(1);
                 }
             } else {
                 // No CLI options

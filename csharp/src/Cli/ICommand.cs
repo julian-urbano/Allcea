@@ -22,6 +22,7 @@ namespace jurbano.Allcea.Cli
         Options Options { get; }
         string OptionsFooter { get; }
 
-        void Run(CommandLine cmd);
+        void CheckOptions(CommandLine cmd);
+        void Run();
     }
 }
