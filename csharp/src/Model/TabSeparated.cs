@@ -23,9 +23,9 @@ using System.Globalization;
 
 namespace jurbano.Allcea.Model
 {
-    public class TabSeparated : IReader<Run>, IWriter<Estimate>
+    public class TabSeparated : IReader<Run>, IWriter<Estimate>, IReader<Estimate>, IReader<Metadata>
     {
-        public IEnumerable<Run> Read(TextReader tr)
+        IEnumerable<Run> IReader<Run>.Read(TextReader tr)
         {
             List<Run> runs = new List<Run>();
 
@@ -67,15 +67,73 @@ namespace jurbano.Allcea.Model
             return runs;
         }
 
-        public void Write(TextWriter tw, IEnumerable<Estimate> estimates)
+        void IWriter<Estimate>.Write(TextWriter tw, IEnumerable<Estimate> estimates)
         {
-            foreach (var e in estimates.OrderBy(e => e.Query).ThenBy(e=>e.Document)) {
+            foreach (var e in estimates.OrderBy(e => e.Query).ThenBy(e => e.Document)) {
                 tw.WriteLine(string.Join("\t",
                     e.Query,
                     e.Document,
                     e.Expectation.ToString("0.####", CultureInfo.InvariantCulture),
                     e.Variance.ToString("0.####", CultureInfo.InvariantCulture)));
             }
+        }
+        IEnumerable<Estimate> IReader<Estimate>.Read(TextReader tr)
+        {
+            List<Estimate> estimates = new List<Estimate>();
+
+            int lineNumber = 1;
+            string line = tr.ReadLine();
+            while (line != null) {
+                string[] parts = line.Split('\t'); // query doc E Var
+
+                Estimate e = null;
+                if (parts.Length < 3 || parts.Length > 4) {
+                    throw new FormatException("line " + lineNumber + " is not well-formatted.");
+                }
+                string query = parts[0];
+                string doc = parts[1];
+                double expectation = 0;
+                if (!double.TryParse(parts[2], out expectation)) {
+                    throw new FormatException("line " + lineNumber + " is not well-formatted.");
+                }
+                double variance = 0;
+                if (parts.Length == 4) { // We have Var too
+                    if (!double.TryParse(parts[3], out variance)) {
+                        throw new FormatException("line " + lineNumber + " is not well-formatted.");
+                    }
+                }
+
+                estimates.Add(new Estimate(query, doc, expectation, variance));
+
+                line = tr.ReadLine();
+                lineNumber++;
+            }
+
+            return estimates;
+        }
+
+        IEnumerable<Metadata> IReader<Metadata>.Read(TextReader tr)
+        {
+            List<Metadata> metadata = new List<Metadata>();
+
+            int lineNumber = 1;
+            string line = tr.ReadLine();
+            while (line != null) {
+                string[] parts = line.Split('\t'); // doc artist genre
+                if (parts.Length != 3) {
+                    throw new FormatException("line " + lineNumber + " is not well-formatted.");
+                }
+                string doc = parts[0];
+                string artist = parts[1];
+                string genre = parts[2];
+
+                metadata.Add(new Metadata(doc, artist, genre));
+
+                line = tr.ReadLine();
+                lineNumber++;
+            }
+
+            return metadata;
         }
     }
 }

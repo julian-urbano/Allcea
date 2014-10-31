@@ -21,7 +21,7 @@ using System.Threading.Tasks;
 
 namespace jurbano.Allcea.Model
 {
-    [global::System.Diagnostics.DebuggerDisplay("System:{System}, Quert:{Query}, Documents={Documents.Length}")]
+    [global::System.Diagnostics.DebuggerDisplay("System:{System}, Query:{Query}, Documents={Documents.Length}")]
     public class Run
     {
         public string System { get; protected set; }

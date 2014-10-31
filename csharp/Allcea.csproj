@@ -70,6 +70,7 @@
     <Compile Include="src\Cli\ICommand.cs" />
     <Compile Include="src\Model\IWriter.cs" />
     <Compile Include="src\Model\IReader.cs" />
+    <Compile Include="src\Model\Metadata.cs" />
     <Compile Include="src\Model\Run.cs" />
     <Compile Include="src\Model\TabSeparated.cs" />
   </ItemGroup>

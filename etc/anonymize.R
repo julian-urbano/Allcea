@@ -24,6 +24,11 @@ u <- unique(u)
 u <- u[order(u$query, u$doc),]
 write.table(file="judgments.txt", col.names=F, row.names=F, quote=F, sep="\t", u)
 
+# Sample judgments
+set.seed(0)
+write.table(file="judgments-sample.txt", col.names=F, row.names=F, quote=F, sep="\t", u[sample(1:nrow(u),100),])
+
+
 # Metadata
 t <- read.table("original-meta.txt", head=T, sep="\t", stringsAsFactors=F, quote="\"")
 t <- t[c("id","track_artist","genre")]
