@@ -18,21 +18,19 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using jurbano.Allcea.Model;
 
-namespace jurbano.Allcea.Model
+namespace jurbano.Allcea.Estimation
 {
-    [global::System.Diagnostics.DebuggerDisplay("Document:{Document}, Artist:{Artist}, Genre={Genre}")]
-    public class Metadata
+    public class MoutEstimator : IEstimator
     {
-        public string Document { get; protected set; }
-        public string Artist { get; protected set; }
-        public string Genre { get; protected set; }
-
-        public Metadata(string doc, string artist, string genre)
+        public MoutEstimator(IEnumerable<Run> runs, IEnumerable<Metadata> metadata)
         {
-            this.Document = doc;
-            this.Artist = artist;
-            this.Genre = genre;
+        }
+
+        public Estimate Estimate(string query, string doc)
+        {
+            throw new NotImplementedException();
         }
     }
 }

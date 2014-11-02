@@ -86,7 +86,6 @@ namespace jurbano.Allcea.Model
             while (line != null) {
                 string[] parts = line.Split('\t'); // query doc E Var
 
-                Estimate e = null;
                 if (parts.Length < 3 || parts.Length > 4) {
                     throw new FormatException("line " + lineNumber + " is not well-formatted.");
                 }

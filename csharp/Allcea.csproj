@@ -63,6 +63,9 @@
   <ItemGroup>
     <Compile Include="src\Allcea.cs" />
     <Compile Include="src\Cli\EstimateCommand.cs" />
+    <Compile Include="src\Cli\EstimatorWrapper.cs" />
+    <Compile Include="src\Cli\EvaluateCommand.cs" />
+    <Compile Include="src\Estimation\MoutEstimator.cs" />
     <Compile Include="src\Model\Estimate.cs" />
     <Compile Include="src\Estimation\UniformEstimator.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

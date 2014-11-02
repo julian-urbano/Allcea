@@ -33,20 +33,25 @@ namespace jurbano.Allcea.Cli
         {
             get
             {
-                return "The available estimators are:"
-                    + "\n  uniform  uniform distribution with the Fine scale, from 0 to 100.";
+                return "The available estimators and their parameters are:"
+                    + "\n  uniform  uniform distribution with the Fine scale, from 0 to 100."
+                    + "\n  mout     model fitted with features about system outputs and metadata."
+                    + "\n             -p meta=file   path to file with artist-genre metadata for all documents."
+                    + "\n  mjud     model fitted with features about system outputs, metadata and known judgments."
+                    + "\n             -p meta=file   path to file with artist-genre metadata for all documents."
+                    + "\n             -p known=file  path to file with judgments already known.";
             }
         }
 
-        protected FileInfo InputPath { get; set; }
-        protected IEstimator Estimator { get; set; }
+        protected string InputPath { get; set; }
+        protected EstimatorWrapper Estimator { get; set; }
 
         public EstimateCommand()
         {
             this.Options = new Options();
             this.Options.AddOption(OptionBuilder.Factory.IsRequired().HasArg().WithArgName("name").WithDescription("name of the estimator to use.").Create("e"));
             this.Options.AddOption(OptionBuilder.Factory.IsRequired().HasArg().WithArgName("file").WithDescription("path to the file with system runs.").Create("i"));
-            //this.Options.AddOption(OptionBuilder.Factory.HasArgs().WithArgName("name=value").WithDescription("parameter to the estimator.").Create("p"));
+            this.Options.AddOption(OptionBuilder.Factory.HasArgs().WithArgName("name=value").WithDescription("parameter to the estimator.").Create("p"));
             this.Options.AddOption(OptionBuilder.Factory.WithDescription("shows this help message.").Create("h"));
 
             this.InputPath = null;
@@ -56,34 +61,29 @@ namespace jurbano.Allcea.Cli
         public void CheckOptions(CommandLine cmd)
         {
             // Input file
-            string inputFile = cmd.GetOptionValue('i');
-            if (!File.Exists(inputFile)) {
-                throw new ArgumentException("Input file '" + inputFile + "' does not exist.");
-            } else {
-                this.InputPath = new FileInfo(inputFile);
+            this.InputPath = cmd.GetOptionValue('i');
+            if (!File.Exists(this.InputPath)) {
+                throw new ArgumentException("Input file '" + this.InputPath + "' does not exist.");
             }
             // Estimator
-            string estimatorName = cmd.GetOptionValue('e').ToLower();
-            switch (estimatorName) {
-                case "uniform":
-                    this.Estimator = new UniformEstimator(100); break; //TODO: relevance levels
-                default:
-                    throw new ArgumentException("'" + estimatorName + "' is not a valid estimator name. See '" + Allcea.CLI_NAME_AND_VERSION + " estimate -h'.");
-              }
+            Dictionary<string, string> parameters = Allcea.ParseNameValueParameters(cmd.GetOptionValues('p'));
+            this.Estimator = new EstimatorWrapper(cmd.GetOptionValue('e'), parameters);
         }
 
         public void Run()
         {
             // Read input file
-            IReader<Run> runReader = new TabSeparated();
             IEnumerable<Run> runs = null;
             try {
-                using (StreamReader sr = new StreamReader(File.OpenRead(this.InputPath.FullName))) {
+                IReader<Run> runReader = new TabSeparated();
+                using (StreamReader sr = new StreamReader(File.OpenRead(this.InputPath))) {
                     runs = runReader.Read(sr);
                 }
             } catch (Exception ex) {
                 throw new FormatException("Error reading input file: " + ex.Message, ex);
             }
+            // Initialize wrapped estimator
+            this.Estimator.Initialize(runs);
             // Compile list of all query-doc pairs
             Dictionary<string, HashSet<string>> querydocs = new Dictionary<string, HashSet<string>>();
             foreach (var run in runs) {
@@ -98,8 +98,7 @@ namespace jurbano.Allcea.Cli
             List<Estimate> estimates = new List<Estimate>();
             foreach (var qd in querydocs) {
                 foreach (var doc in qd.Value) {
-                    Estimate e = this.Estimator.Estimate(qd.Key, doc);
-                    estimates.Add(e);
+                    estimates.Add(this.Estimator.Estimate(qd.Key, doc));
                 }
             }
             // Output estimates

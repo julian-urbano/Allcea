@@ -19,6 +19,7 @@ using System;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Collections.Generic;
 
 namespace jurbano.Allcea
 {
@@ -34,7 +35,7 @@ namespace jurbano.Allcea
 
         public static void Main(string[] args)
         {
-            //args = @"estimate -e uniform -i ..\..\..\etc\runs.txt".Split(' ');
+            //args = @"estimate -e uniform -i ..\..\..\etc\runs.txt -p meta=..\..\..\metadata.txt".Split(' ');
 
             if (args.Length > 0) {
                 // Check CLI command name
@@ -73,7 +74,8 @@ namespace jurbano.Allcea
                         command.CheckOptions(cmd);
                         command.Run();
                     } catch (ParseException pe) {
-                        Allcea.PrintUsage(pe.Message, commandName, options, command.OptionsFooter);
+                        Console.Error.WriteLine((pe.Message.EndsWith(".") ? pe.Message : pe.Message + ".")
+                            + " See '" + Allcea.CLI_NAME_AND_VERSION + " " + commandName + " -h'.");
                         Environment.Exit(1);
                     } catch (Exception ex) {
                         Console.Error.WriteLine(ex.Message);
@@ -85,6 +87,24 @@ namespace jurbano.Allcea
                 Allcea.PrintMainUsage(null);
                 Environment.Exit(1);
             }
+        }
+        public static Dictionary<string, string> ParseNameValueParameters(IEnumerable<string> args)
+        {
+            Dictionary<string, string> values = new Dictionary<string, string>();
+
+            if (args != null) {
+                foreach (var arg in args) {
+                    int i = arg.IndexOf('=');
+                    if (i < 1 || i > arg.Length - 2) {
+                        throw new ParseException("'" + arg + "' is not a valid <name=value> parameter.");
+                    }
+                    string name = arg.Substring(0, i);
+                    string value = arg.Substring(i + 1);
+                    values.Add(name, value);
+                }
+            }
+
+            return values;
         }
         protected static void PrintMainUsage(string msg)
         {
