@@ -27,6 +27,8 @@ namespace jurbano.Allcea.Cli
 {
     public class EstimatorWrapper : IEstimator
     {
+        protected Dictionary<string, Dictionary<string, Estimate>> Judged { get; set; }
+
         protected IEstimator Estimator { get; set; }
         protected string Name { get; set; }
 
@@ -34,6 +36,8 @@ namespace jurbano.Allcea.Cli
 
         public EstimatorWrapper(string name, Dictionary<string, string> parameters)
         {
+            this.Judged = new Dictionary<string, Dictionary<string, Estimate>>();
+
             this.Name = name;
             this.Estimator = null;
             switch (this.Name) {
@@ -56,8 +60,17 @@ namespace jurbano.Allcea.Cli
             }
         }
 
-        public void Initialize(IEnumerable<Run> runs)
+        public void Initialize(IEnumerable<Run> runs, IEnumerable<Estimate> judged)
         {
+            // Re-structure known judgments
+            foreach (var j in judged) {
+                Dictionary<string, Estimate> q = null;
+                if (!this.Judged.TryGetValue(j.Query, out q)) {
+                    q = new Dictionary<string, Estimate>();
+                    this.Judged.Add(j.Query, q);
+                }
+                q.Add(j.Document, j);
+            }
             // Instantiate estimator
             switch (this.Name) {
                 case "uniform":
@@ -82,6 +95,15 @@ namespace jurbano.Allcea.Cli
 
         public Estimate Estimate(string query, string doc)
         {
+            // Check if it is already judged
+            Dictionary<string, Estimate> q = null;
+            if (this.Judged.TryGetValue(query, out q)) {
+                Estimate e = null;
+                if (q.TryGetValue(doc, out e)) {
+                    return e;
+                }
+            }
+            // if not, estimate
             return this.Estimator.Estimate(query, doc);
         }
     }

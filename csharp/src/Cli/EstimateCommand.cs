@@ -36,14 +36,15 @@ namespace jurbano.Allcea.Cli
                 return "The available estimators and their parameters are:"
                     + "\n  uniform  uniform distribution with the Fine scale, from 0 to 100."
                     + "\n  mout     model fitted with features about system outputs and metadata."
-                    + "\n             -p meta=file   path to file with artist-genre metadata for all documents."
+                    + "\n             -p meta=file    path to file with artist-genre metadata for all documents."
                     + "\n  mjud     model fitted with features about system outputs, metadata and known judgments."
-                    + "\n             -p meta=file   path to file with artist-genre metadata for all documents."
-                    + "\n             -p known=file  path to file with judgments already known.";
+                    + "\n             -p meta=file    path to file with artist-genre metadata for all documents."
+                    + "\n             -p judged=file  path to file with judgments already known.";
             }
         }
 
         protected string InputPath { get; set; }
+        protected string JudgedPath { get; set; }
         protected EstimatorWrapper Estimator { get; set; }
 
         public EstimateCommand()
@@ -51,10 +52,12 @@ namespace jurbano.Allcea.Cli
             this.Options = new Options();
             this.Options.AddOption(OptionBuilder.Factory.IsRequired().HasArg().WithArgName("name").WithDescription("name of the estimator to use.").Create("e"));
             this.Options.AddOption(OptionBuilder.Factory.IsRequired().HasArg().WithArgName("file").WithDescription("path to the file with system runs.").Create("i"));
+            this.Options.AddOption(OptionBuilder.Factory.HasArg().WithArgName("file").WithDescription("path to file with known judgments. These documents will not be estimated.").Create("j"));
             this.Options.AddOption(OptionBuilder.Factory.HasArgs().WithArgName("name=value").WithDescription("parameter to the estimator.").Create("p"));
             this.Options.AddOption(OptionBuilder.Factory.WithDescription("shows this help message.").Create("h"));
 
             this.InputPath = null;
+            this.JudgedPath = null;
             this.Estimator = null;
         }
 
@@ -64,6 +67,13 @@ namespace jurbano.Allcea.Cli
             this.InputPath = cmd.GetOptionValue('i');
             if (!File.Exists(this.InputPath)) {
                 throw new ArgumentException("Input file '" + this.InputPath + "' does not exist.");
+            }
+            // Judgments file
+            if (cmd.HasOption('j')) {
+                this.JudgedPath = cmd.GetOptionValue('j');
+                if (!File.Exists(this.JudgedPath)) {
+                    throw new ArgumentException("Known judgments file '" + this.JudgedPath + "' does not exist.");
+                }
             }
             // Estimator
             Dictionary<string, string> parameters = Allcea.ParseNameValueParameters(cmd.GetOptionValues('p'));
@@ -82,8 +92,22 @@ namespace jurbano.Allcea.Cli
             } catch (Exception ex) {
                 throw new FormatException("Error reading input file: " + ex.Message, ex);
             }
+            // Read judgments file
+            IEnumerable<Estimate> judged = null;
+            if (this.JudgedPath != null) {
+                try {
+                    IReader<Estimate> runReader = new TabSeparated();
+                    using (StreamReader sr = new StreamReader(File.OpenRead(this.JudgedPath))) {
+                        judged = runReader.Read(sr);
+                    }
+                } catch (Exception ex) {
+                    throw new FormatException("Error reading known judgments file: " + ex.Message, ex);
+                }
+            } else {
+                judged = new Estimate[] { };
+            }
             // Initialize wrapped estimator
-            this.Estimator.Initialize(runs);
+            this.Estimator.Initialize(runs, judged);
             // Compile list of all query-doc pairs
             Dictionary<string, HashSet<string>> querydocs = new Dictionary<string, HashSet<string>>();
             foreach (var run in runs) {
