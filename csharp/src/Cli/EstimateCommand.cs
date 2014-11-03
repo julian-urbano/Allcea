@@ -36,10 +36,10 @@ namespace jurbano.Allcea.Cli
                 return "The available estimators and their parameters are:"
                     + "\n  uniform  uniform distribution with the Fine scale, from 0 to 100."
                     + "\n  mout     model fitted with features about system outputs and metadata."
-                    + "\n             -p meta=file    path to file with artist-genre metadata for all documents."
-                    + "\n  mjud     model fitted with features about system outputs, metadata and known judgments."
-                    + "\n             -p meta=file    path to file with artist-genre metadata for all documents."
-                    + "\n             -p judged=file  path to file with judgments already known.";
+                    + "\n             -p meta=file    path to file with artist-genre metadata for all documents.";
+                    //+ "\n  mjud     model fitted with features about system outputs, metadata and known judgments."
+                    //+ "\n             -p meta=file    path to file with artist-genre metadata for all documents."
+                    //+ "\n             -p judged=file  path to file with judgments already known.";
             }
         }
 
@@ -52,7 +52,7 @@ namespace jurbano.Allcea.Cli
             this.Options = new Options();
             this.Options.AddOption(OptionBuilder.Factory.IsRequired().HasArg().WithArgName("name").WithDescription("name of the estimator to use.").Create("e"));
             this.Options.AddOption(OptionBuilder.Factory.IsRequired().HasArg().WithArgName("file").WithDescription("path to the file with system runs.").Create("i"));
-            this.Options.AddOption(OptionBuilder.Factory.HasArg().WithArgName("file").WithDescription("path to file with known judgments. These documents will not be estimated.").Create("j"));
+            this.Options.AddOption(OptionBuilder.Factory.HasArg().WithArgName("file").WithDescription("path to file with known judgments (will not be estimated).").Create("j"));
             this.Options.AddOption(OptionBuilder.Factory.HasArgs().WithArgName("name=value").WithDescription("parameter to the estimator.").Create("p"));
             this.Options.AddOption(OptionBuilder.Factory.WithDescription("shows this help message.").Create("h"));
 

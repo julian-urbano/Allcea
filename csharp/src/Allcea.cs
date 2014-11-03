@@ -35,7 +35,7 @@ namespace jurbano.Allcea
 
         public static void Main(string[] args)
         {
-            //args = @"estimate -e uniform -i ..\..\..\etc\runs.txt -p meta=..\..\..\metadata.txt".Split(' ');
+            //args = @"evaluate -e ..\..\..\etc\estimates.txt -i ..\..\..\etc\runs.txt -j ..\..\..\etc\judgments-sample.txt".Split(' ');
 
             if (args.Length > 0) {
                 // Check CLI command name
@@ -49,7 +49,9 @@ namespace jurbano.Allcea
                     case "estimate":
                         command = new EstimateCommand();
                         break;
-                    //case "evaluate": break;
+                    case "evaluate":
+                        command = new EvaluateCommand();
+                        break;
                     //case "next": break;
                     //case "simulate": break;
                     default:
