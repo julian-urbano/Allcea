@@ -27,7 +27,7 @@ namespace jurbano.Allcea.Cli
 {
     public class EstimatorWrapper : IEstimator
     {
-        protected Dictionary<string, Dictionary<string, Estimate>> _judged;
+        protected Dictionary<string, Dictionary<string, Estimate>> _judged; // [query, [doc, estimate]]
 
         protected IEstimator _estimator;
         protected string _name;
