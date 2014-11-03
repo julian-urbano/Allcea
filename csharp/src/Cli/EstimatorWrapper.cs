@@ -27,20 +27,20 @@ namespace jurbano.Allcea.Cli
 {
     public class EstimatorWrapper : IEstimator
     {
-        protected Dictionary<string, Dictionary<string, Estimate>> Judged { get; set; }
+        protected Dictionary<string, Dictionary<string, Estimate>> _judged;
 
-        protected IEstimator Estimator { get; set; }
-        protected string Name { get; set; }
+        protected IEstimator _estimator;
+        protected string _name;
 
-        protected string MetadataPath { get; set; }
+        protected string _metadataPath;
 
         public EstimatorWrapper(string name, Dictionary<string, string> parameters)
         {
-            this.Judged = new Dictionary<string, Dictionary<string, Estimate>>();
+            this._judged = new Dictionary<string, Dictionary<string, Estimate>>();
 
-            this.Name = name;
-            this.Estimator = null;
-            switch (this.Name) {
+            this._name = name;
+            this._estimator = null;
+            switch (this._name) {
                 case "uniform":
                     if (parameters.Count != 0) {
                         throw new ParseException("Estimator 'uniform' does not have parameters.");
@@ -50,9 +50,9 @@ namespace jurbano.Allcea.Cli
                     if (parameters.Count != 1 || !parameters.ContainsKey("meta")) {
                         throw new ParseException("Invalid parameters for estimator 'mout'.");
                     }
-                    this.MetadataPath = parameters["meta"];
-                    if (!File.Exists(this.MetadataPath)) {
-                        throw new ArgumentException("Metadata file '" + this.MetadataPath + "' does not exist.");
+                    this._metadataPath = parameters["meta"];
+                    if (!File.Exists(this._metadataPath)) {
+                        throw new ArgumentException("Metadata file '" + this._metadataPath + "' does not exist.");
                     }
                     break;
                 default:
@@ -65,30 +65,30 @@ namespace jurbano.Allcea.Cli
             // Re-structure known judgments
             foreach (var j in judged) {
                 Dictionary<string, Estimate> q = null;
-                if (!this.Judged.TryGetValue(j.Query, out q)) {
+                if (!this._judged.TryGetValue(j.Query, out q)) {
                     q = new Dictionary<string, Estimate>();
-                    this.Judged.Add(j.Query, q);
+                    this._judged.Add(j.Query, q);
                 }
                 q.Add(j.Document, j);
             }
             // Instantiate estimator
-            switch (this.Name) {
+            switch (this._name) {
                 case "uniform":
                     // nothing to initialize
-                    this.Estimator = new UniformEstimator(100);
+                    this._estimator = new UniformEstimator(100);
                     break;
                 case "mout":
                     // read metadata
                     IEnumerable<Metadata> metadata;
                     try {
                         IReader<Metadata> reader = new TabSeparated();
-                        using (StreamReader sr = new StreamReader(File.OpenRead(this.MetadataPath))) {
+                        using (StreamReader sr = new StreamReader(File.OpenRead(this._metadataPath))) {
                             metadata = reader.Read(sr);
                         }
                     } catch (Exception ex) {
                         throw new FormatException("Error reading metadata file: " + ex.Message, ex);
                     }
-                    this.Estimator = new MoutEstimator(runs, metadata);
+                    this._estimator = new MoutEstimator(runs, metadata);
                     break;
             }
         }
@@ -97,14 +97,14 @@ namespace jurbano.Allcea.Cli
         {
             // Check if it is already judged
             Dictionary<string, Estimate> q = null;
-            if (this.Judged.TryGetValue(query, out q)) {
+            if (this._judged.TryGetValue(query, out q)) {
                 Estimate e = null;
                 if (q.TryGetValue(doc, out e)) {
                     return e;
                 }
             }
             // if not, estimate
-            return this.Estimator.Estimate(query, doc);
+            return this._estimator.Estimate(query, doc);
         }
     }
 }

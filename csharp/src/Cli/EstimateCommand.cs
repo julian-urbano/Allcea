@@ -43,9 +43,9 @@ namespace jurbano.Allcea.Cli
             }
         }
 
-        protected string InputPath { get; set; }
-        protected string JudgedPath { get; set; }
-        protected EstimatorWrapper Estimator { get; set; }
+        protected string _inputPath;
+        protected string _judgedPath;
+        protected EstimatorWrapper _estimator;
 
         public EstimateCommand()
         {
@@ -56,28 +56,28 @@ namespace jurbano.Allcea.Cli
             this.Options.AddOption(OptionBuilder.Factory.HasArgs().WithArgName("name=value").WithDescription("parameter to the estimator.").Create("p"));
             this.Options.AddOption(OptionBuilder.Factory.WithDescription("shows this help message.").Create("h"));
 
-            this.InputPath = null;
-            this.JudgedPath = null;
-            this.Estimator = null;
+            this._inputPath = null;
+            this._judgedPath = null;
+            this._estimator = null;
         }
 
         public void CheckOptions(CommandLine cmd)
         {
             // Input file
-            this.InputPath = cmd.GetOptionValue('i');
-            if (!File.Exists(this.InputPath)) {
-                throw new ArgumentException("Input file '" + this.InputPath + "' does not exist.");
+            this._inputPath = cmd.GetOptionValue('i');
+            if (!File.Exists(this._inputPath)) {
+                throw new ArgumentException("Input file '" + this._inputPath + "' does not exist.");
             }
             // Judgments file
             if (cmd.HasOption('j')) {
-                this.JudgedPath = cmd.GetOptionValue('j');
-                if (!File.Exists(this.JudgedPath)) {
-                    throw new ArgumentException("Known judgments file '" + this.JudgedPath + "' does not exist.");
+                this._judgedPath = cmd.GetOptionValue('j');
+                if (!File.Exists(this._judgedPath)) {
+                    throw new ArgumentException("Known judgments file '" + this._judgedPath + "' does not exist.");
                 }
             }
             // Estimator
             Dictionary<string, string> parameters = Allcea.ParseNameValueParameters(cmd.GetOptionValues('p'));
-            this.Estimator = new EstimatorWrapper(cmd.GetOptionValue('e'), parameters);
+            this._estimator = new EstimatorWrapper(cmd.GetOptionValue('e'), parameters);
         }
 
         public void Run()
@@ -86,7 +86,7 @@ namespace jurbano.Allcea.Cli
             IEnumerable<Run> runs = null;
             try {
                 IReader<Run> runReader = new TabSeparated();
-                using (StreamReader sr = new StreamReader(File.OpenRead(this.InputPath))) {
+                using (StreamReader sr = new StreamReader(File.OpenRead(this._inputPath))) {
                     runs = runReader.Read(sr);
                 }
             } catch (Exception ex) {
@@ -94,10 +94,10 @@ namespace jurbano.Allcea.Cli
             }
             // Read judgments file
             IEnumerable<Estimate> judged = null;
-            if (this.JudgedPath != null) {
+            if (this._judgedPath != null) {
                 try {
                     IReader<Estimate> runReader = new TabSeparated();
-                    using (StreamReader sr = new StreamReader(File.OpenRead(this.JudgedPath))) {
+                    using (StreamReader sr = new StreamReader(File.OpenRead(this._judgedPath))) {
                         judged = runReader.Read(sr);
                     }
                 } catch (Exception ex) {
@@ -107,7 +107,7 @@ namespace jurbano.Allcea.Cli
                 judged = new Estimate[] { };
             }
             // Initialize wrapped estimator
-            this.Estimator.Initialize(runs, judged);
+            this._estimator.Initialize(runs, judged);
             // Compile list of all query-doc pairs
             Dictionary<string, HashSet<string>> querydocs = new Dictionary<string, HashSet<string>>();
             foreach (var run in runs) {
@@ -122,7 +122,7 @@ namespace jurbano.Allcea.Cli
             List<Estimate> estimates = new List<Estimate>();
             foreach (var qd in querydocs) {
                 foreach (var doc in qd.Value) {
-                    estimates.Add(this.Estimator.Estimate(qd.Key, doc));
+                    estimates.Add(this._estimator.Estimate(qd.Key, doc));
                 }
             }
             // Output estimates
