@@ -25,18 +25,18 @@ using net.sf.dotnetcli;
 
 namespace jurbano.Allcea.Cli
 {
-    public class EstimatorWrapper : IEstimator
+    public class EstimatorWrapper : IRelevanceEstimator
     {
-        protected Dictionary<string, Dictionary<string, Estimate>> _judged; // [query, [doc, estimate]]
+        protected Dictionary<string, Dictionary<string, RelevanceEstimate>> _judged; // [query, [doc, estimate]]
 
-        protected IEstimator _estimator;
+        protected IRelevanceEstimator _estimator;
         protected string _name;
 
         protected string _metadataPath;
 
         public EstimatorWrapper(string name, Dictionary<string, string> parameters)
         {
-            this._judged = new Dictionary<string, Dictionary<string, Estimate>>();
+            this._judged = new Dictionary<string, Dictionary<string, RelevanceEstimate>>();
 
             this._name = name;
             this._estimator = null;
@@ -60,13 +60,13 @@ namespace jurbano.Allcea.Cli
             }
         }
 
-        public void Initialize(IEnumerable<Run> runs, IEnumerable<Estimate> judged)
+        public void Initialize(IEnumerable<Run> runs, IEnumerable<RelevanceEstimate> judged)
         {
             // Re-structure known judgments
             foreach (var j in judged) {
-                Dictionary<string, Estimate> q = null;
+                Dictionary<string, RelevanceEstimate> q = null;
                 if (!this._judged.TryGetValue(j.Query, out q)) {
-                    q = new Dictionary<string, Estimate>();
+                    q = new Dictionary<string, RelevanceEstimate>();
                     this._judged.Add(j.Query, q);
                 }
                 q.Add(j.Document, j);
@@ -75,7 +75,7 @@ namespace jurbano.Allcea.Cli
             switch (this._name) {
                 case "uniform":
                     // nothing to initialize
-                    this._estimator = new UniformEstimator(100);
+                    this._estimator = new UniformRelevanceEstimator(100);
                     break;
                 case "mout":
                     // read metadata
@@ -88,17 +88,17 @@ namespace jurbano.Allcea.Cli
                     } catch (Exception ex) {
                         throw new FormatException("Error reading metadata file: " + ex.Message, ex);
                     }
-                    this._estimator = new MoutEstimator(runs, metadata);
+                    this._estimator = new MoutRelevanceEstimator(runs, metadata);
                     break;
             }
         }
 
-        public Estimate Estimate(string query, string doc)
+        public RelevanceEstimate Estimate(string query, string doc)
         {
             // Check if it is already judged
-            Dictionary<string, Estimate> q = null;
+            Dictionary<string, RelevanceEstimate> q = null;
             if (this._judged.TryGetValue(query, out q)) {
-                Estimate e = null;
+                RelevanceEstimate e = null;
                 if (q.TryGetValue(doc, out e)) {
                     return e;
                 }

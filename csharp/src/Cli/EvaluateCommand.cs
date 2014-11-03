@@ -84,10 +84,10 @@ namespace jurbano.Allcea.Cli
                 throw new FormatException("Error reading input file: " + ex.Message, ex);
             }
             // Read judgments file
-            IEnumerable<Estimate> judged = null;
+            IEnumerable<RelevanceEstimate> judged = null;
             if (this._judgedPath != null) {
                 try {
-                    IReader<Estimate> runReader = new TabSeparated();
+                    IReader<RelevanceEstimate> runReader = new TabSeparated();
                     using (StreamReader sr = new StreamReader(File.OpenRead(this._judgedPath))) {
                         judged = runReader.Read(sr);
                     }
@@ -95,12 +95,12 @@ namespace jurbano.Allcea.Cli
                     throw new FormatException("Error reading known judgments file: " + ex.Message, ex);
                 }
             } else {
-                judged = new Estimate[] { };
+                judged = new RelevanceEstimate[] { };
             }
             // Read estiamtes file
-            IEnumerable<Estimate> estimates = null;
+            IEnumerable<RelevanceEstimate> estimates = null;
             try {
-                IReader<Estimate> runReader = new TabSeparated();
+                IReader<RelevanceEstimate> runReader = new TabSeparated();
                 using (StreamReader sr = new StreamReader(File.OpenRead(this._estimatedPath))) {
                     estimates = runReader.Read(sr);
                 }

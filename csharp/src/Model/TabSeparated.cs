@@ -23,7 +23,7 @@ using System.Globalization;
 
 namespace jurbano.Allcea.Model
 {
-    public class TabSeparated : IReader<Run>, IWriter<Estimate>, IReader<Estimate>, IReader<Metadata>
+    public class TabSeparated : IReader<Run>, IWriter<RelevanceEstimate>, IReader<RelevanceEstimate>, IReader<Metadata>
     {
         IEnumerable<Run> IReader<Run>.Read(TextReader tr)
         {
@@ -67,7 +67,7 @@ namespace jurbano.Allcea.Model
             return runs;
         }
 
-        void IWriter<Estimate>.Write(TextWriter tw, IEnumerable<Estimate> estimates)
+        void IWriter<RelevanceEstimate>.Write(TextWriter tw, IEnumerable<RelevanceEstimate> estimates)
         {
             foreach (var e in estimates.OrderBy(e => e.Query).ThenBy(e => e.Document)) {
                 tw.WriteLine(string.Join("\t",
@@ -77,9 +77,9 @@ namespace jurbano.Allcea.Model
                     e.Variance.ToString("0.####", CultureInfo.InvariantCulture)));
             }
         }
-        IEnumerable<Estimate> IReader<Estimate>.Read(TextReader tr)
+        IEnumerable<RelevanceEstimate> IReader<RelevanceEstimate>.Read(TextReader tr)
         {
-            List<Estimate> estimates = new List<Estimate>();
+            List<RelevanceEstimate> estimates = new List<RelevanceEstimate>();
 
             int lineNumber = 1;
             string line = tr.ReadLine();
@@ -102,7 +102,7 @@ namespace jurbano.Allcea.Model
                     }
                 }
 
-                estimates.Add(new Estimate(query, doc, expectation, variance));
+                estimates.Add(new RelevanceEstimate(query, doc, expectation, variance));
 
                 line = tr.ReadLine();
                 lineNumber++;

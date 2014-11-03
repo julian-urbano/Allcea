@@ -13,12 +13,22 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with this program.  If not, see http://www.gnu.org/licenses/.
 
-using jurbano.Allcea.Model;
-
-namespace jurbano.Allcea.Estimation
+namespace jurbano.Allcea.Model
 {
-    public interface IEstimator
+    [global::System.Diagnostics.DebuggerDisplay("Query:{Query}, Doc:{Document}, E={Expectation}, Var={Variance}")]
+    public class RelevanceEstimate
     {
-        Estimate Estimate(string query, string doc);
+        public string Query { get; protected set; }
+        public string Document { get; protected set; }
+        public double Expectation { get; protected set; }
+        public double Variance { get; protected set; }
+
+        public RelevanceEstimate(string query, string doc, double e, double var)
+        {
+            this.Query = query;
+            this.Document = doc;
+            this.Expectation = e;
+            this.Variance = var;
+        }
     }
 }

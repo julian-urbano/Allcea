@@ -13,22 +13,27 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with this program.  If not, see http://www.gnu.org/licenses/.
 
-namespace jurbano.Allcea.Model
-{
-    [global::System.Diagnostics.DebuggerDisplay("Query:{Query}, Doc:{Document}, E={Expectation}, Var={Variance}")]
-    public class Estimate
-    {
-        public string Query { get; protected set; }
-        public string Document { get; protected set; }
-        public double Expectation { get; protected set; }
-        public double Variance { get; protected set; }
+using System;
+using jurbano.Allcea.Model;
 
-        public Estimate(string query, string doc, double e, double var)
+namespace jurbano.Allcea.Estimation
+{
+    [global::System.Diagnostics.DebuggerDisplay("MaxRelevance={MaxRelevance}")]
+    public class UniformRelevanceEstimator : IRelevanceEstimator
+    {
+        public int MaxRelevance { get; protected set; }
+
+        public UniformRelevanceEstimator(int maxrelevance)
         {
-            this.Query = query;
-            this.Document = doc;
-            this.Expectation = e;
-            this.Variance = var;
+            if (maxrelevance < 1) {
+                throw new ArgumentException("The maximum relevance level cannot be less than 1.");
+            }
+            this.MaxRelevance = maxrelevance;
+        }
+
+        public RelevanceEstimate Estimate(string query, string doc)
+        {
+            return new RelevanceEstimate(query, doc, this.MaxRelevance / 2.0, (Math.Pow(this.MaxRelevance + 1, 2) - 1.0) / 12.0);
         }
     }
 }

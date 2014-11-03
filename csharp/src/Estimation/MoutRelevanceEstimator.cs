@@ -22,7 +22,7 @@ using jurbano.Allcea.Model;
 
 namespace jurbano.Allcea.Estimation
 {
-    public class MoutEstimator : IEstimator
+    public class MoutRelevanceEstimator : IRelevanceEstimator
     {
         protected Dictionary<string, Dictionary<string, double>> _fSYS; // [query, [doc, fSYS]]
         protected double _OV;
@@ -34,13 +34,13 @@ namespace jurbano.Allcea.Estimation
         protected static readonly double[] LABELS = new double[] { 5, 15, 25, 35, 45, 55, 65, 75, 85, 95 };
         protected static readonly double[] ALPHAS = new double[] { -0.5092, -1.2231, -1.7919, -2.2787, -2.7216, -3.1956, -3.8044, -4.6928, -5.9567 };
         protected static readonly double[] BETAS = new double[] { -17.4721, 0.1336, 26.455, 2.9111, 2.0443, 5.4544, -3.4851 };
-        protected IEstimator _defaultEstimator;
+        protected IRelevanceEstimator _defaultEstimator;
 
-        public MoutEstimator(IEnumerable<Run> runs, IEnumerable<Metadata> metadata)
+        public MoutRelevanceEstimator(IEnumerable<Run> runs, IEnumerable<Metadata> metadata)
         {
             // Instantiate model: fSYS, OV, fSYS:OV, fART, sGEN, fGEN, sGEN:fGEN
-            this._model = new OrdinalLogisticRegression(MoutEstimator.LABELS, MoutEstimator.ALPHAS, MoutEstimator.BETAS);
-            this._defaultEstimator = new UniformEstimator(100);
+            this._model = new OrdinalLogisticRegression(MoutRelevanceEstimator.LABELS, MoutRelevanceEstimator.ALPHAS, MoutRelevanceEstimator.BETAS);
+            this._defaultEstimator = new UniformRelevanceEstimator(100);
             // Number of systems and metadata
             int nSys = runs.Select(r => r.System).Distinct().Count();
             Dictionary<string, string> artists = new Dictionary<string, string>();// [doc, artist]
@@ -131,7 +131,7 @@ namespace jurbano.Allcea.Estimation
             }
         }
 
-        public Estimate Estimate(string query, string doc)
+        public RelevanceEstimate Estimate(string query, string doc)
         {
             Dictionary<string, double> qfSYS = null;
             Dictionary<string, bool> qsGEN = null;
@@ -149,7 +149,7 @@ namespace jurbano.Allcea.Estimation
                     qfGEN.TryGetValue(doc, out fGEN) && qfART.TryGetValue(doc, out fART)) {
                     double[] thetas = new double[] { fSYS, this._OV, fSYS * this._OV, fART, sGEN ? 1 : 0, fGEN, sGEN ? fGEN : 0 };
                     double[] eval = this._model.Evaluate(thetas);
-                    return new Estimate(query, doc, eval[0], eval[1]);
+                    return new RelevanceEstimate(query, doc, eval[0], eval[1]);
                 }
             }
             // If here, some feature was missing, so return default estimate

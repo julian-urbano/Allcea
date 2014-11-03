@@ -65,15 +65,19 @@
     <Compile Include="src\Cli\EstimateCommand.cs" />
     <Compile Include="src\Cli\EstimatorWrapper.cs" />
     <Compile Include="src\Cli\EvaluateCommand.cs" />
-    <Compile Include="src\Estimation\MoutEstimator.cs" />
-    <Compile Include="src\Model\Estimate.cs" />
-    <Compile Include="src\Estimation\UniformEstimator.cs" />
+    <Compile Include="src\Estimation\IRelevanceEstimator.cs" />
+    <Compile Include="src\Estimation\MoutRelevanceEstimator.cs" />
+    <Compile Include="src\Estimation\OrdinalLogisticRegression.cs" />
+    <Compile Include="src\Estimation\UniformRelevanceEstimator.cs" />
+    <Compile Include="src\Evaluation\CG.cs" />
+    <Compile Include="src\Evaluation\IMeasure.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="src\Estimation\IEstimator.cs" />
     <Compile Include="src\Cli\ICommand.cs" />
     <Compile Include="src\Model\IWriter.cs" />
     <Compile Include="src\Model\IReader.cs" />
     <Compile Include="src\Model\Metadata.cs" />
+    <Compile Include="src\Model\RelativeEffectivenessEstimate.cs" />
+    <Compile Include="src\Model\RelevanceEstimate.cs" />
     <Compile Include="src\Model\Run.cs" />
     <Compile Include="src\Model\TabSeparated.cs" />
   </ItemGroup>

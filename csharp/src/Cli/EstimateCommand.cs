@@ -93,10 +93,10 @@ namespace jurbano.Allcea.Cli
                 throw new FormatException("Error reading input file: " + ex.Message, ex);
             }
             // Read judgments file
-            IEnumerable<Estimate> judged = null;
+            IEnumerable<RelevanceEstimate> judged = null;
             if (this._judgedPath != null) {
                 try {
-                    IReader<Estimate> runReader = new TabSeparated();
+                    IReader<RelevanceEstimate> runReader = new TabSeparated();
                     using (StreamReader sr = new StreamReader(File.OpenRead(this._judgedPath))) {
                         judged = runReader.Read(sr);
                     }
@@ -104,7 +104,7 @@ namespace jurbano.Allcea.Cli
                     throw new FormatException("Error reading known judgments file: " + ex.Message, ex);
                 }
             } else {
-                judged = new Estimate[] { };
+                judged = new RelevanceEstimate[] { };
             }
             // Initialize wrapped estimator
             this._estimator.Initialize(runs, judged);
@@ -119,14 +119,14 @@ namespace jurbano.Allcea.Cli
                 docs.UnionWith(run.Documents);
             }
             // Estimate relevance of all query-doc pairs
-            List<Estimate> estimates = new List<Estimate>();
+            List<RelevanceEstimate> estimates = new List<RelevanceEstimate>();
             foreach (var qd in querydocs) {
                 foreach (var doc in qd.Value) {
                     estimates.Add(this._estimator.Estimate(qd.Key, doc));
                 }
             }
             // Output estimates
-            IWriter<Estimate> estWriter = new TabSeparated();
+            IWriter<RelevanceEstimate> estWriter = new TabSeparated();
             estWriter.Write(Console.Out, estimates);
         }
     }
