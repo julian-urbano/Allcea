@@ -26,12 +26,21 @@ namespace jurbano.Allcea.Estimation
     {
         protected Dictionary<string, Dictionary<string, double>> _fSYS; // [query, [doc, fSYS]]
         protected double _OV;
-        protected Dictionary<string, Dictionary<string, bool?>> _sGEN; // [query, [doc, sGEN]]
-        protected Dictionary<string, Dictionary<string, double?>> _fGEN; // [query, [doc, fGEN]]
-        protected Dictionary<string, Dictionary<string, double?>> _fART; // [query, [doc, fART]]
+        protected Dictionary<string, Dictionary<string, bool>> _sGEN; // [query, [doc, sGEN]]
+        protected Dictionary<string, Dictionary<string, double>> _fGEN; // [query, [doc, fGEN]]
+        protected Dictionary<string, Dictionary<string, double>> _fART; // [query, [doc, fART]]
+
+        protected OrdinalLogisticRegression _model;
+        protected static readonly double[] LABELS = new double[] { 5, 15, 25, 35, 45, 55, 65, 75, 85, 95 };
+        protected static readonly double[] ALPHAS = new double[] { -0.5092, -1.2231, -1.7919, -2.2787, -2.7216, -3.1956, -3.8044, -4.6928, -5.9567 };
+        protected static readonly double[] BETAS = new double[] { -17.4721, 0.1336, 26.455, 2.9111, 2.0443, 5.4544, -3.4851 };
+        protected IEstimator _defaultEstimator;
 
         public MoutEstimator(IEnumerable<Run> runs, IEnumerable<Metadata> metadata)
         {
+            // Instantiate model: fSYS, OV, fSYS:OV, fART, sGEN, fGEN, sGEN:fGEN
+            this._model = new OrdinalLogisticRegression(MoutEstimator.LABELS, MoutEstimator.ALPHAS, MoutEstimator.BETAS);
+            this._defaultEstimator = new UniformEstimator(100);
             // Number of systems and metadata
             int nSys = runs.Select(r => r.System).Distinct().Count();
             Dictionary<string, string> artists = new Dictionary<string, string>();// [doc, artist]
@@ -57,14 +66,14 @@ namespace jurbano.Allcea.Estimation
             // OV
             this._OV = ((double)this._fSYS.Sum(q => q.Value.Count)) / (nSys * this._fSYS.Count * runs.First().Documents.Count());
             // sGEN, fGEN and fART, replicate query-doc structure from fSYS
-            this._sGEN = new Dictionary<string, Dictionary<string, bool?>>();
-            this._fGEN = new Dictionary<string, Dictionary<string, double?>>();
-            this._fART = new Dictionary<string, Dictionary<string, double?>>();
+            this._sGEN = new Dictionary<string, Dictionary<string, bool>>();
+            this._fGEN = new Dictionary<string, Dictionary<string, double>>();
+            this._fART = new Dictionary<string, Dictionary<string, double>>();
             foreach (var qfSYS in this._fSYS) {
                 string query = qfSYS.Key;
-                Dictionary<string, bool?> qsGEN = new Dictionary<string, bool?>();
-                Dictionary<string, double?> qfGEN = new Dictionary<string, double?>();
-                Dictionary<string, double?> qfART = new Dictionary<string, double?>();
+                Dictionary<string, bool> qsGEN = new Dictionary<string, bool>();
+                Dictionary<string, double> qfGEN = new Dictionary<string, double>();
+                Dictionary<string, double> qfART = new Dictionary<string, double>();
                 foreach (var qdfSYS in qfSYS.Value) {
                     string doc = qdfSYS.Key;
                     // sGEN and fGEN
@@ -74,7 +83,7 @@ namespace jurbano.Allcea.Estimation
                         if (genres.ContainsKey(query)) {
                             qsGEN.Add(qdfSYS.Key, docGEN == genres[qfSYS.Key]);
                         } else {
-                            qsGEN.Add(doc, null);
+                            //qsGEN.Add(doc, null);
                         }
                         // fGEN
                         double docfGEN = 0;
@@ -92,8 +101,8 @@ namespace jurbano.Allcea.Estimation
                         }
                         qfGEN.Add(doc, docfGEN / docfGENnotnull);
                     } else {
-                        qsGEN.Add(doc, null);
-                        qfGEN.Add(doc, null);
+                        //qsGEN.Add(doc, null);
+                        //qfGEN.Add(doc, null);
                     }
                     // fART
                     if (artists.ContainsKey(doc)) {
@@ -113,7 +122,7 @@ namespace jurbano.Allcea.Estimation
                         }
                         qfART.Add(doc, docfART / docfARTnotnull);
                     } else {
-                        qfART.Add(doc, null);
+                        //qfART.Add(doc, null);
                     }
                 }
                 this._sGEN.Add(query, qsGEN);
@@ -124,7 +133,27 @@ namespace jurbano.Allcea.Estimation
 
         public Estimate Estimate(string query, string doc)
         {
-            throw new NotImplementedException();
+            Dictionary<string, double> qfSYS = null;
+            Dictionary<string, bool> qsGEN = null;
+            Dictionary<string, double> qfGEN = null;
+            Dictionary<string, double> qfART = null;
+            // Do we have features for the query?
+            if (this._fSYS.TryGetValue(query, out qfSYS) && this._sGEN.TryGetValue(query, out qsGEN) &&
+                this._fGEN.TryGetValue(query, out qfGEN) && this._fART.TryGetValue(query, out qfART)) {
+                double fSYS = 0;
+                bool sGEN = false;
+                double fGEN = 0;
+                double fART = 0;
+                // Do we have features for the document?
+                if (qfSYS.TryGetValue(doc, out fSYS) && qsGEN.TryGetValue(doc, out sGEN) &&
+                    qfGEN.TryGetValue(doc, out fGEN) && qfART.TryGetValue(doc, out fART)) {
+                    double[] thetas = new double[] { fSYS, this._OV, fSYS * this._OV, fART, sGEN ? 1 : 0, fGEN, sGEN ? fGEN : 0 };
+                    double[] eval = this._model.Evaluate(thetas);
+                    return new Estimate(query, doc, eval[0], eval[1]);
+                }
+            }
+            // If here, some feature was missing, so return default estimate
+            return this._defaultEstimator.Estimate(query, doc);
         }
     }
 }
