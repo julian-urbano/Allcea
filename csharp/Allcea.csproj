@@ -72,6 +72,10 @@
     <Compile Include="src\Estimation\UniformRelevanceEstimator.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="src\Cli\ICommand.cs" />
+    <Compile Include="src\Evaluation\CG.cs" />
+    <Compile Include="src\Evaluation\IConfidenceEstimator.cs" />
+    <Compile Include="src\Evaluation\IMeasure.cs" />
+    <Compile Include="src\Evaluation\NormalConfidenceEstimator.cs" />
     <Compile Include="src\Model\IReadHelper.cs" />
     <Compile Include="src\Model\IWriter.cs" />
     <Compile Include="src\Model\IReader.cs" />
@@ -98,9 +102,7 @@
       <Install>false</Install>
     </BootstrapperPackage>
   </ItemGroup>
-  <ItemGroup>
-    <Folder Include="src\Evaluation\" />
-  </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
