@@ -82,29 +82,12 @@ namespace jurbano.Allcea.Cli
 
         public void Run()
         {
-            // Read input file
-            IEnumerable<Run> runs = null;
-            try {
-                IReader<Run> runReader = new TabSeparated();
-                using (StreamReader sr = new StreamReader(File.OpenRead(this._inputPath))) {
-                    runs = runReader.Read(sr);
-                }
-            } catch (Exception ex) {
-                throw new FormatException("Error reading input file: " + ex.Message, ex);
-            }
-            // Read judgments file
-            IEnumerable<RelevanceEstimate> judged = null;
+            // Read files
+            IReadHelper reader = new TabSeparated();
+            IEnumerable<Run> runs = reader.ReadInputFile(this._inputPath);
+            IEnumerable<RelevanceEstimate> judged = new RelevanceEstimate[] { };
             if (this._judgedPath != null) {
-                try {
-                    IReader<RelevanceEstimate> runReader = new TabSeparated();
-                    using (StreamReader sr = new StreamReader(File.OpenRead(this._judgedPath))) {
-                        judged = runReader.Read(sr);
-                    }
-                } catch (Exception ex) {
-                    throw new FormatException("Error reading known judgments file: " + ex.Message, ex);
-                }
-            } else {
-                judged = new RelevanceEstimate[] { };
+                judged = reader.ReadKnownJudgments(this._judgedPath);
             }
             // Initialize wrapped estimator
             this._estimator.Initialize(runs, judged);

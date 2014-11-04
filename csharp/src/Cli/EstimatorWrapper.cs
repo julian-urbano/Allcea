@@ -79,15 +79,8 @@ namespace jurbano.Allcea.Cli
                     break;
                 case "mout":
                     // read metadata
-                    IEnumerable<Metadata> metadata;
-                    try {
-                        IReader<Metadata> reader = new TabSeparated();
-                        using (StreamReader sr = new StreamReader(File.OpenRead(this._metadataPath))) {
-                            metadata = reader.Read(sr);
-                        }
-                    } catch (Exception ex) {
-                        throw new FormatException("Error reading metadata file: " + ex.Message, ex);
-                    }
+                    IReadHelper reader = new TabSeparated();
+                    IEnumerable<Metadata> metadata = reader.ReadMetadata(this._metadataPath);
                     this._estimator = new MoutRelevanceEstimator(runs, metadata);
                     break;
             }

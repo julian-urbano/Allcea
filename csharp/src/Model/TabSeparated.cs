@@ -23,7 +23,7 @@ using System.Globalization;
 
 namespace jurbano.Allcea.Model
 {
-    public class TabSeparated : IReader<Run>, IWriter<RelevanceEstimate>, IReader<RelevanceEstimate>, IReader<Metadata>
+    public class TabSeparated : IReader<Run>, IWriter<RelevanceEstimate>, IReader<RelevanceEstimate>, IReader<Metadata>, IReadHelper
     {
         IEnumerable<Run> IReader<Run>.Read(TextReader tr)
         {
@@ -132,6 +132,59 @@ namespace jurbano.Allcea.Model
                 lineNumber++;
             }
 
+            return metadata;
+        }
+
+        public IEnumerable<Run> ReadInputFile(string file)
+        {
+            IEnumerable<Run> runs = null;
+            try {
+                IReader<Run> runReader = new TabSeparated();
+                using (StreamReader sr = new StreamReader(File.OpenRead(file))) {
+                    runs = runReader.Read(sr);
+                }
+            } catch (Exception ex) {
+                throw new FormatException("Error reading input file: " + ex.Message, ex);
+            }
+            return runs;
+        }
+        public IEnumerable<RelevanceEstimate> ReadKnownJudgments(string file)
+        {
+            IEnumerable<RelevanceEstimate> judged = null;
+            try {
+                IReader<RelevanceEstimate> runReader = new TabSeparated();
+                using (StreamReader sr = new StreamReader(File.OpenRead(file))) {
+                    judged = runReader.Read(sr);
+                }
+            } catch (Exception ex) {
+                throw new FormatException("Error reading known judgments file: " + ex.Message, ex);
+            }
+            return judged;
+        }
+        public IEnumerable<RelevanceEstimate> ReadEstimatedJudgments(string file)
+        {
+            IEnumerable<RelevanceEstimate> estimates = null;
+            try {
+                IReader<RelevanceEstimate> runReader = new TabSeparated();
+                using (StreamReader sr = new StreamReader(File.OpenRead(file))) {
+                    estimates = runReader.Read(sr);
+                }
+            } catch (Exception ex) {
+                throw new FormatException("Error reading estimated judgments file: " + ex.Message, ex);
+            }
+            return estimates;
+        }
+        public IEnumerable<Metadata> ReadMetadata(string file)
+        {
+            IEnumerable<Metadata> metadata;
+            try {
+                IReader<Metadata> reader = new TabSeparated();
+                using (StreamReader sr = new StreamReader(File.OpenRead(file))) {
+                    metadata = reader.Read(sr);
+                }
+            } catch (Exception ex) {
+                throw new FormatException("Error reading metadata file: " + ex.Message, ex);
+            }
             return metadata;
         }
     }

@@ -65,14 +65,14 @@
     <Compile Include="src\Cli\EstimateCommand.cs" />
     <Compile Include="src\Cli\EstimatorWrapper.cs" />
     <Compile Include="src\Cli\EvaluateCommand.cs" />
+    <Compile Include="src\Cli\RelevanceEstimateStore.cs" />
     <Compile Include="src\Estimation\IRelevanceEstimator.cs" />
     <Compile Include="src\Estimation\MoutRelevanceEstimator.cs" />
     <Compile Include="src\Estimation\OrdinalLogisticRegression.cs" />
     <Compile Include="src\Estimation\UniformRelevanceEstimator.cs" />
-    <Compile Include="src\Evaluation\CG.cs" />
-    <Compile Include="src\Evaluation\IMeasure.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="src\Cli\ICommand.cs" />
+    <Compile Include="src\Model\IReadHelper.cs" />
     <Compile Include="src\Model\IWriter.cs" />
     <Compile Include="src\Model\IReader.cs" />
     <Compile Include="src\Model\Metadata.cs" />
@@ -98,7 +98,9 @@
       <Install>false</Install>
     </BootstrapperPackage>
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <Folder Include="src\Evaluation\" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
