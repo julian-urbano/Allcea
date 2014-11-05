@@ -13,19 +13,22 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with this program.  If not, see http://www.gnu.org/licenses/.
 
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using jurbano.Allcea.Model;
-using jurbano.Allcea.Estimation;
-
-namespace jurbano.Allcea.Evaluation
+namespace jurbano.Allcea.Model
 {
-    public interface IMeasure
+    [global::System.Diagnostics.DebuggerDisplay("System:{System}, Query:{Query}, E={Expectation}, Var={Variance}")]
+    public class AbsoluteEffectivenessEstimate
     {
-        RelativeEffectivenessEstimate Estimate(Run runA, Run runB, IRelevanceEstimator estimator);
-        AbsoluteEffectivenessEstimate Estimate(Run run, IRelevanceEstimator estimator);
+        public string System { get; protected set; }
+        public string Query { get; protected set; }
+        public double Expectation { get; protected set; }
+        public double Variance { get; protected set; }
+
+        public AbsoluteEffectivenessEstimate(string system, string query, double e, double var)
+        {
+            this.System = system;
+            this.Query = query;
+            this.Expectation = e;
+            this.Variance = var;
+        }
     }
 }
