@@ -21,6 +21,7 @@ using System.Threading.Tasks;
 using net.sf.dotnetcli;
 using System.IO;
 using jurbano.Allcea.Model;
+using jurbano.Allcea.Evaluation;
 
 namespace jurbano.Allcea.Cli
 {
@@ -83,9 +84,80 @@ namespace jurbano.Allcea.Cli
             IEnumerable<RelevanceEstimate> estimates = reader.ReadEstimatedJudgments(this._estimatedPath);
             // Instantiate estimate store and measure
             RelevanceEstimateStore store = new RelevanceEstimateStore(judged, estimates);
-            // Re-structure runs
-            // Estimate effectiveness
+            IMeasure measure = new CG(100); //TODO: max relevance
+
+            // Re-structure runs for efficient access
+            Dictionary<string, Dictionary<string, Run>> sqRuns = new Dictionary<string, Dictionary<string, Run>>(); // [sys [query run]]
+            foreach (Run r in runs) {
+                Dictionary<string, Run> tempruns = null;
+                if (!sqRuns.TryGetValue(r.System, out tempruns)) {
+                    tempruns = new Dictionary<string, Run>();
+                    sqRuns.Add(r.System, tempruns);
+                }
+                tempruns.Add(r.Query, r);
+            }
+
+            // Estimate per-query absolute effectiveness
+            Dictionary<string, Dictionary<string, AbsoluteEffectivenessEstimate>> sqAbsEstimates =
+                new Dictionary<string, Dictionary<string, AbsoluteEffectivenessEstimate>>(); // [sys [query abs]]
+            foreach(var sqRun in sqRuns){
+                Dictionary<string,AbsoluteEffectivenessEstimate> qAbs = new Dictionary<string,AbsoluteEffectivenessEstimate>();
+                foreach(var qRun in sqRun.Value){
+                    qAbs.Add(qRun.Key, measure.Estimate(qRun.Value, store));
+                }
+                sqAbsEstimates.Add(sqRun.Key, qAbs);
+            }
+            // Average and sort
+            List<AbsoluteEffectivenessEstimate> absSorted = new List<AbsoluteEffectivenessEstimate>();
+            foreach (var sqAbsEst in sqAbsEstimates) {
+                double e = sqAbsEst.Value.Sum(qAbsEst => qAbsEst.Value.Expectation);
+                double var = sqAbsEst.Value.Sum(qAbsEst => qAbsEst.Value.Variance);
+                e /= sqAbsEst.Value.Count;
+                var /= sqAbsEst.Value.Count * sqAbsEst.Value.Count;
+                absSorted.Add(new AbsoluteEffectivenessEstimate(sqAbsEst.Key, "[all]", e, var));
+            }
+            absSorted = absSorted.OrderByDescending(est => est.Expectation).ToList();
+
+            // Estimate per-query relative effectiveness
+            Dictionary<string, Dictionary<string, Dictionary<string, RelativeEffectivenessEstimate>>> ssqRelEstimates =
+                new Dictionary<string, Dictionary<string, Dictionary<string, RelativeEffectivenessEstimate>>>(); // [sysA [sysB [query rel]]]
+            for(int i = 0; i < absSorted.Count -1; i++){
+                string sysA = absSorted[i].System;
+                var runsA = sqRuns[sysA];
+                Dictionary<string, Dictionary<string, RelativeEffectivenessEstimate>> sqRelEstimates = new Dictionary<string, Dictionary<string, RelativeEffectivenessEstimate>>();
+                for(int j = i+1; j < absSorted.Count; j++){
+                    Dictionary<string, RelativeEffectivenessEstimate> qRelEstimates = new Dictionary<string, RelativeEffectivenessEstimate>();
+                    string sysB = absSorted[j].System;
+                    var runsB = sqRuns[sysB];
+                    foreach(var qRun in runsA){
+                        qRelEstimates.Add(qRun.Key, measure.Estimate(qRun.Value, runsB[qRun.Key], store));
+                    }
+                    sqRelEstimates.Add(sysB, qRelEstimates);
+                }
+                ssqRelEstimates.Add(sysA, sqRelEstimates);
+            }
+            // Average (already sorted)
+            List<RelativeEffectivenessEstimate> relSorted = new List<RelativeEffectivenessEstimate>();
+            for (int i = 0; i < absSorted.Count - 1; i++) {
+                string sysA = absSorted[i].System;
+                Dictionary<string, Dictionary<string, RelativeEffectivenessEstimate>> sqRelEstimates = ssqRelEstimates[sysA];
+                for (int j = i + 1; j < absSorted.Count; j++) {
+                    string sysB = absSorted[j].System;
+                    Dictionary<string, RelativeEffectivenessEstimate> qRelEstimates = sqRelEstimates[sysB];
+                    double e = qRelEstimates.Values.Sum(relEst => relEst.Expectation);
+                    double var = qRelEstimates.Values.Sum(relEst => relEst.Variance);
+                    e /= qRelEstimates.Values.Count;
+                    var /= qRelEstimates.Values.Count * qRelEstimates.Values.Count;
+                    relSorted.Add(new RelativeEffectivenessEstimate(sysA, sysB, "[all]", e, var));
+                }
+            }
+
             // Output estimates
+            IWriter<AbsoluteEffectivenessEstimate> writerAbs = new TabSeparated();
+            writerAbs.Write(Console.Out, absSorted);
+            Console.WriteLine();
+            IWriter<RelativeEffectivenessEstimate> writerRel = new TabSeparated();
+            writerRel.Write(Console.Out, relSorted);
         }
     }
 }

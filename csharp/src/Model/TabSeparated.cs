@@ -20,10 +20,15 @@ using System.Text;
 using System.Threading.Tasks;
 using System.IO;
 using System.Globalization;
+using jurbano.Allcea.Evaluation;
 
 namespace jurbano.Allcea.Model
 {
-    public class TabSeparated : IReader<Run>, IWriter<RelevanceEstimate>, IReader<RelevanceEstimate>, IReader<Metadata>, IReadHelper
+    public class TabSeparated : IReader<Run>,
+        IWriter<RelevanceEstimate>, IReader<RelevanceEstimate>,
+        IReader<Metadata>,
+        IWriter<RelativeEffectivenessEstimate>, IWriter<AbsoluteEffectivenessEstimate>,
+        IReadHelper
     {
         IEnumerable<Run> IReader<Run>.Read(TextReader tr)
         {
@@ -111,6 +116,44 @@ namespace jurbano.Allcea.Model
             return estimates;
         }
 
+        void IWriter<AbsoluteEffectivenessEstimate>.Write(TextWriter tw, IEnumerable<AbsoluteEffectivenessEstimate> estimates)
+        {
+            IConfidenceEstimator confidence = new NormalConfidenceEstimator();
+            List<double> confidences = new List<double>();
+            tw.WriteLine(string.Join("\t", "Sys", "E", "Var", "[E", "E]", "Conf"));
+            foreach (var estimate in estimates) {
+                double conf = confidence.EstimateConfidence(estimate.Expectation, estimate.Variance);
+                confidences.Add(conf);
+                double[] interval = confidence.EstimateInterval(estimate.Expectation, estimate.Variance, .95);
+
+                tw.WriteLine(string.Join("\t", estimate.System,
+                        estimate.Expectation.ToString("0.####"), estimate.Variance.ToString("0.####"),
+                        interval[0].ToString("0.####"), interval[1].ToString("0.####"),
+                        conf.ToString("0.####")));
+            }
+            tw.WriteLine();
+            tw.WriteLine("Average Confidence: " + confidences.Average().ToString("0.####"));
+        }
+        
+        void IWriter<RelativeEffectivenessEstimate>.Write(TextWriter tw, IEnumerable<RelativeEffectivenessEstimate> estimates)
+        {
+            IConfidenceEstimator confidence = new NormalConfidenceEstimator();
+            List<double> confidences = new List<double>();
+            tw.WriteLine(string.Join("\t", "SysA", "SysB", "E", "Var", "[E", "E]", "Conf"));
+            foreach (var estimate in estimates) {
+                double conf = confidence.EstimateConfidence(estimate.Expectation, estimate.Variance);
+                confidences.Add(conf);
+                double[] interval = confidence.EstimateInterval(estimate.Expectation, estimate.Variance, .95);
+
+                tw.WriteLine(string.Join("\t", estimate.SystemA, estimate.SystemB,
+                        estimate.Expectation.ToString("0.####"), estimate.Variance.ToString("0.####"),
+                        interval[0].ToString("0.####"), interval[1].ToString("0.####"),
+                        conf.ToString("0.####")));
+            }
+            tw.WriteLine();
+            tw.WriteLine("Average Confidence: " + confidences.Average().ToString("0.####"));
+        }
+
         IEnumerable<Metadata> IReader<Metadata>.Read(TextReader tr)
         {
             List<Metadata> metadata = new List<Metadata>();
@@ -134,7 +177,7 @@ namespace jurbano.Allcea.Model
 
             return metadata;
         }
-
+        
         public IEnumerable<Run> ReadInputFile(string file)
         {
             IEnumerable<Run> runs = null;
@@ -187,5 +230,6 @@ namespace jurbano.Allcea.Model
             }
             return metadata;
         }
+
     }
 }

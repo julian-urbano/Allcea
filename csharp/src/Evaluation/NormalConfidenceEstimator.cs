@@ -24,15 +24,15 @@ namespace jurbano.Allcea.Evaluation
 {
     public class NormalConfidenceEstimator : IConfidenceEstimator
     {
-        public double[] EstimateInterval(RelativeEffectivenessEstimate estimate, double confidence)
+        public double[] EstimateInterval(double e, double var, double confidence)
         {
             double z = NormalConfidenceEstimator.Quantile((1.0 - confidence) / 2.0);
-            double len = Math.Abs(z * Math.Sqrt(estimate.Variance));
-            return new double[] { estimate.Expectation - len, estimate.Expectation + len };
+            double len = Math.Abs(z * Math.Sqrt(var));
+            return new double[] { e - len, e + len };
         }
-        public double EstimateConfidence(RelativeEffectivenessEstimate estimate)
+        public double EstimateConfidence(double e, double var)
         {
-            double conf = NormalConfidenceEstimator.CDF(estimate.Expectation / Math.Sqrt(estimate.Variance));
+            double conf = NormalConfidenceEstimator.CDF(e / Math.Sqrt(var));
             return conf;// Math.Max(conf, 1 - conf);
         }
 

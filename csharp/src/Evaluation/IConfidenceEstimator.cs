@@ -24,7 +24,7 @@ namespace jurbano.Allcea.Evaluation
 {
     public interface IConfidenceEstimator
     {
-        double[] EstimateInterval(RelativeEffectivenessEstimate estimate, double confidence);
-        double EstimateConfidence(RelativeEffectivenessEstimate estimate);
+        double[] EstimateInterval(double e, double var, double confidence);
+        double EstimateConfidence(double e, double var);
     }
 }
