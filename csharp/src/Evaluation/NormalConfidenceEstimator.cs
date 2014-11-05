@@ -30,10 +30,13 @@ namespace jurbano.Allcea.Evaluation
             double len = Math.Abs(z * Math.Sqrt(var));
             return new double[] { e - len, e + len };
         }
-        public double EstimateConfidence(double e, double var)
+        public double EstimateRelativeConfidence(double e, double var, double size)
         {
-            double conf = NormalConfidenceEstimator.CDF(e / Math.Sqrt(var));
-            return conf;// Math.Max(conf, 1 - conf);
+            return NormalConfidenceEstimator.CDF((e-size) / Math.Sqrt(var));
+        }
+        public double EstimateAbsoluteConfidence(double e, double var, double size)
+        {
+            return 1.0 - 2 * NormalConfidenceEstimator.CDF(-size / Math.Sqrt(var));
         }
 
         protected static double CDF(double x)

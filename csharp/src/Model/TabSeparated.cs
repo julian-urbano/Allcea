@@ -133,7 +133,7 @@ namespace jurbano.Allcea.Model
             List<double> confidences = new List<double>();
             tw.WriteLine(string.Join("\t", "Sys", "E", "Var", "[E", "E]", "Conf"));
             foreach (var estimate in estimates) {
-                double conf = confidence.EstimateConfidence(estimate.Expectation, estimate.Variance);
+                double conf = confidence.EstimateAbsoluteConfidence(estimate.Expectation, estimate.Variance, .01);
                 confidences.Add(conf);
                 double[] interval = confidence.EstimateInterval(estimate.Expectation, estimate.Variance, .95);
 
@@ -152,7 +152,7 @@ namespace jurbano.Allcea.Model
             List<double> confidences = new List<double>();
             tw.WriteLine(string.Join("\t", "SysA", "SysB", "E", "Var", "[E", "E]", "Conf"));
             foreach (var estimate in estimates) {
-                double conf = confidence.EstimateConfidence(estimate.Expectation, estimate.Variance);
+                double conf = confidence.EstimateRelativeConfidence(estimate.Expectation, estimate.Variance, 0);
                 confidences.Add(conf);
                 double[] interval = confidence.EstimateInterval(estimate.Expectation, estimate.Variance, .95);
 

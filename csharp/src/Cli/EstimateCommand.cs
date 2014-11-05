@@ -55,7 +55,7 @@ namespace jurbano.Allcea.Cli
             this.Options.AddOption(OptionBuilder.Factory.IsRequired().HasArg().WithArgName("file").WithDescription("path to the file with system runs.").Create("i"));
             this.Options.AddOption(OptionBuilder.Factory.HasArg().WithArgName("file").WithDescription("path to file with known judgments (will not be estimated).").Create("j"));
             this.Options.AddOption(OptionBuilder.Factory.HasArgs().WithArgName("name=value").WithDescription("parameter to the estimator.").Create("p"));
-            this.Options.AddOption(OptionBuilder.Factory.HasArg().WithArgName("digits").WithDescription("number of fractional digits to output").Create("d"));
+            this.Options.AddOption(OptionBuilder.Factory.HasArg().WithArgName("digits").WithDescription("number of fractional digits to output (defaults to " + Allcea.DEFAULT_DECIMAL_DIGITS + ")").Create("d"));
             this.Options.AddOption(OptionBuilder.Factory.WithDescription("shows this help message.").Create("h"));
 
             this._inputPath = null;
