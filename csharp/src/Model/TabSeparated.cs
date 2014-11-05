@@ -140,12 +140,11 @@ namespace jurbano.Allcea.Model
                 tw.WriteLine(string.Join("\t", estimate.System,
                         estimate.Expectation.ToString(this._doubleFormat, CultureInfo.InvariantCulture), estimate.Variance.ToString(this._doubleFormat, CultureInfo.InvariantCulture),
                         interval[0].ToString(this._doubleFormat, CultureInfo.InvariantCulture), interval[1].ToString(this._doubleFormat, CultureInfo.InvariantCulture),
-                        conf.ToString(this._doubleFormat, CultureInfo.InvariantCulture)));
+                        conf.ToString(this._doubleFormat, CultureInfo.InvariantCulture), this.GetConfidenceCode(conf)));
             }
             tw.WriteLine();
             tw.WriteLine("Average Confidence: " + confidences.Average().ToString(this._doubleFormat, CultureInfo.InvariantCulture));
-        }
-        
+        }        
         void IWriter<RelativeEffectivenessEstimate>.Write(TextWriter tw, IEnumerable<RelativeEffectivenessEstimate> estimates)
         {
             IConfidenceEstimator confidence = new NormalConfidenceEstimator();
@@ -159,10 +158,17 @@ namespace jurbano.Allcea.Model
                 tw.WriteLine(string.Join("\t", estimate.SystemA, estimate.SystemB,
                         estimate.Expectation.ToString(this._doubleFormat, CultureInfo.InvariantCulture), estimate.Variance.ToString(this._doubleFormat, CultureInfo.InvariantCulture),
                         interval[0].ToString(this._doubleFormat, CultureInfo.InvariantCulture), interval[1].ToString(this._doubleFormat, CultureInfo.InvariantCulture),
-                        conf.ToString(this._doubleFormat, CultureInfo.InvariantCulture)));
+                        conf.ToString(this._doubleFormat, CultureInfo.InvariantCulture), this.GetConfidenceCode(conf)));
             }
             tw.WriteLine();
             tw.WriteLine("Average Confidence: " + confidences.Average().ToString(this._doubleFormat, CultureInfo.InvariantCulture));
+        }
+        protected string GetConfidenceCode(double confidence)
+        {
+            if (confidence >= .99) return "***";
+            if (confidence >= .95) return "**";
+            if (confidence >= .90) return "*";
+            return "";
         }
 
         IEnumerable<Metadata> IReader<Metadata>.Read(TextReader tr)
