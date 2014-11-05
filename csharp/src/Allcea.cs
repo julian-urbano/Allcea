@@ -34,9 +34,13 @@ namespace jurbano.Allcea
             + "\nunder the terms of the GNU Lesser General Public License version 3.";
 
         public const int DEFAULT_DECIMAL_DIGITS = 4;
+
         public const double DEFAULT_CONFIDENCE = 0.95;
         public const double DEFAULT_RELATIVE_SIZE = 0;
         public const double DEFAULT_ABSOLUTE_SIZE = 0.01;
+
+        public const int DEFAULT_NUMBER_OF_BATCHES = 1;
+        public const int DEFAULT_BATCH_SIZE = 10;
 
         public static void Main(string[] args)
         {

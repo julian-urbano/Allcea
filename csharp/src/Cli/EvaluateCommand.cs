@@ -65,7 +65,7 @@ namespace jurbano.Allcea.Cli
             double sizeAbs = Allcea.DEFAULT_ABSOLUTE_SIZE;
             if (cmd.HasOption('c')) {
                 string confidenceString = cmd.GetOptionValue('c');
-                if (!Double.TryParse(confidenceString, out confidence) || confidence < 0 || confidence > 1) {
+                if (!Double.TryParse(confidenceString, out confidence) || confidence < 0 || confidence >= 1) {
                     throw new ArgumentException("'" + confidenceString + "' is not a valid confidence level for interval estimates.");
                 }
             }
@@ -74,10 +74,10 @@ namespace jurbano.Allcea.Cli
                 if (sizeStrings.Length != 2) {
                     throw new ArgumentException("Must provide two target effect sizes: relative and absolute.");
                 }
-                if (!Double.TryParse(sizeStrings[0], out sizeRel) || sizeRel < 0 || sizeRel > 1) {
+                if (!Double.TryParse(sizeStrings[0], out sizeRel) || sizeRel < 0 || sizeRel >= 1) {
                     throw new ArgumentException("'" + sizeStrings[1] + "' is not a valid target relative effect size.");
                 }
-                if(!Double.TryParse(sizeStrings[1], out sizeAbs) || sizeAbs < 0 || sizeAbs > 1) {
+                if(!Double.TryParse(sizeStrings[1], out sizeAbs) || sizeAbs < 0 || sizeAbs >= 1) {
                     throw new ArgumentException("'" + sizeStrings[1] + "' is not a valid target absolute effect size.");
                 }
             }

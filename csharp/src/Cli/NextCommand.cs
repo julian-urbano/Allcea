@@ -19,6 +19,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using net.sf.dotnetcli;
+using jurbano.Allcea.Model;
+using jurbano.Allcea.Evaluation;
+using System.IO;
 
 namespace jurbano.Allcea.Cli
 {
@@ -29,6 +32,14 @@ namespace jurbano.Allcea.Cli
         {
             get { return null; }
         }
+
+        protected string _inputPath;
+        protected string _judgedPath;
+        protected string _estimatedPath;
+        protected int _decimalDigits;
+        protected int _batchNum;
+        protected int _batchSize;
+        protected IConfidenceEstimator _confEstimator;
 
         public NextCommand()
         {
@@ -42,11 +53,74 @@ namespace jurbano.Allcea.Cli
             this.Options.AddOption(OptionBuilder.Factory.HasArg().WithArgName("conf").WithDescription("optional target average confidence on the estimates (defaults to " + Allcea.DEFAULT_CONFIDENCE + ").").Create("c"));
             this.Options.AddOption(OptionBuilder.Factory.HasArg().WithArgName("size").WithDescription("optional target effect size to compute confidence (defaults to " + Allcea.DEFAULT_RELATIVE_SIZE + " for relative and " + Allcea.DEFAULT_ABSOLUTE_SIZE + " for absolute).").Create("s"));
             this.Options.AddOption(OptionBuilder.Factory.WithDescription("shows this help message.").Create("h"));
+
+            this._inputPath = null;
+            this._judgedPath = null;
+            this._estimatedPath = null;
+            this._decimalDigits = Allcea.DEFAULT_DECIMAL_DIGITS;
+            this._batchNum = Allcea.DEFAULT_NUMBER_OF_BATCHES;
+            this._batchSize = Allcea.DEFAULT_BATCH_SIZE;
+            this._confEstimator = null;
         }
 
         public void CheckOptions(CommandLine cmd)
         {
-            throw new NotImplementedException();
+            // Target and confidence estimator
+            double confidence = Allcea.DEFAULT_CONFIDENCE;
+            if (cmd.HasOption('c')) {
+                string confidenceString = cmd.GetOptionValue('c');
+                if (!Double.TryParse(confidenceString, out confidence) || confidence < 0 || confidence >= 1) {
+                    throw new ArgumentException("'" + confidenceString + "' is not a valid target average confidence level.");
+                }
+            }
+            string targetString = cmd.GetOptionValue('t').ToLower();
+            if (targetString == "rel") {
+                double size = Allcea.DEFAULT_RELATIVE_SIZE;
+                if (cmd.HasOption('s')) {
+                    string sizeString = cmd.GetOptionValue('s');
+                    if (!Double.TryParse(sizeString, out size) || size < 0 || size >= 1) {
+                        throw new ArgumentException("'" + sizeString + "' is not a valid target relative effect size.");
+                    }
+                }
+                this._confEstimator = new NormalConfidenceEstimator(confidence, size, Allcea.DEFAULT_ABSOLUTE_SIZE);
+            } else if (targetString == "abs") {
+                double size = Allcea.DEFAULT_ABSOLUTE_SIZE;
+                if (cmd.HasOption('s')) {
+                    string sizeString = cmd.GetOptionValue('s');
+                    if (!Double.TryParse(sizeString, out size) || size < 0 || size >= 1) {
+                        throw new ArgumentException("'" + sizeString + "' is not a valid target absolute effect size.");
+                    }
+                }
+                this._confEstimator = new NormalConfidenceEstimator(confidence, Allcea.DEFAULT_RELATIVE_SIZE, size);
+            } else {
+                throw new ArgumentException("'" + targetString + "' is not a valid type of estimates to target.");
+            }
+            // Batches
+            string batchesString = cmd.GetOptionValue('b');
+            if (!Int32.TryParse(batchesString, out this._batchNum) || this._batchNum < 1) {
+                throw new ArgumentException("'" + batchesString + "' is not a valid number of batches.");
+            }
+            string numString = cmd.GetOptionValue('n');
+            if (!Int32.TryParse(numString, out this._batchSize) || this._batchSize < 1) {
+                throw new ArgumentException("'" + numString + "' is not a valid number of documents per batch.");
+            }
+            // Input file
+            this._inputPath = cmd.GetOptionValue('i');
+            if (!File.Exists(this._inputPath)) {
+                throw new ArgumentException("Input file '" + this._inputPath + "' does not exist.");
+            }
+            // Judgments file
+            if (cmd.HasOption('j')) {
+                this._judgedPath = cmd.GetOptionValue('j');
+                if (!File.Exists(this._judgedPath)) {
+                    throw new ArgumentException("Known judgments file '" + this._judgedPath + "' does not exist.");
+                }
+            }
+            // Estimates file
+            this._estimatedPath = cmd.GetOptionValue('e');
+            if (!File.Exists(this._estimatedPath)) {
+                throw new ArgumentException("Estimated judgments file '" + this._estimatedPath + "' does not exist.");
+            }
         }
 
         public void Run()
