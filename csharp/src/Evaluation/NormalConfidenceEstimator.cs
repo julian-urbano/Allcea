@@ -22,21 +22,33 @@ using jurbano.Allcea.Model;
 
 namespace jurbano.Allcea.Evaluation
 {
+    [global::System.Diagnostics.DebuggerDisplay("Normal, Conf={_confidence}, RelSize={_sizeRel}, AbsSize={_sizeAbs}")]
     public class NormalConfidenceEstimator : IConfidenceEstimator
-    {
-        public double[] EstimateInterval(double e, double var, double confidence)
+    {        
+        protected double _confidence;
+        protected double _sizeRel;
+        protected double _sizeAbs;
+
+        public NormalConfidenceEstimator(double confidence, double sizeRel, double sizeAbs)
         {
-            double z = NormalConfidenceEstimator.Quantile((1.0 - confidence) / 2.0);
+            this._confidence = confidence;
+            this._sizeRel = sizeRel;
+            this._sizeAbs = sizeAbs;
+        }
+
+        public double[] EstimateInterval(double e, double var)
+        {
+            double z = NormalConfidenceEstimator.Quantile((1.0 - this._confidence) / 2.0);
             double len = Math.Abs(z * Math.Sqrt(var));
             return new double[] { e - len, e + len };
         }
-        public double EstimateRelativeConfidence(double e, double var, double size)
+        public double EstimateRelativeConfidence(double e, double var)
         {
-            return NormalConfidenceEstimator.CDF((e-size) / Math.Sqrt(var));
+            return NormalConfidenceEstimator.CDF((e-this._sizeRel) / Math.Sqrt(var));
         }
-        public double EstimateAbsoluteConfidence(double e, double var, double size)
+        public double EstimateAbsoluteConfidence(double e, double var)
         {
-            return 1.0 - 2 * NormalConfidenceEstimator.CDF(-size / Math.Sqrt(var));
+            return 1.0 - 2 * NormalConfidenceEstimator.CDF(-this._sizeAbs / Math.Sqrt(var));
         }
 
         protected static double CDF(double x)

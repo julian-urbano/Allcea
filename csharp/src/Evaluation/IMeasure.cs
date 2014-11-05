@@ -25,7 +25,7 @@ namespace jurbano.Allcea.Evaluation
 {
     public interface IMeasure
     {
-        RelativeEffectivenessEstimate Estimate(Run runA, Run runB, IRelevanceEstimator estimator);
-        AbsoluteEffectivenessEstimate Estimate(Run run, IRelevanceEstimator estimator);
+        RelativeEffectivenessEstimate Estimate(Run runA, Run runB, IRelevanceEstimator relEstimator, IConfidenceEstimator confEstimator);
+        AbsoluteEffectivenessEstimate Estimate(Run run, IRelevanceEstimator relEstimator, IConfidenceEstimator confEstimator);
     }
 }

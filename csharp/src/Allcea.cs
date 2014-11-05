@@ -34,10 +34,13 @@ namespace jurbano.Allcea
             + "\nunder the terms of the GNU Lesser General Public License version 3.";
 
         public const int DEFAULT_DECIMAL_DIGITS = 4;
+        public const double DEFAULT_CONFIDENCE = 0.95;
+        public const double DEFAULT_RELATIVE_SIZE = 0;
+        public const double DEFAULT_ABSOLUTE_SIZE = 0.01;
 
         public static void Main(string[] args)
         {
-            //args = @"evaluate -d 10 -e ..\..\..\etc\estimates.txt -i ..\..\..\etc\runs.txt".Split(' '); //-j ..\..\..\etc\judgments-sample.txt".Split(' ');
+            //args = @"evaluate -e ..\..\..\etc\estimates.txt -i ..\..\..\etc\runs.txt".Split(' '); //-j ..\..\..\etc\judgments-sample.txt".Split(' ');
 
             if (args.Length > 0) {
                 // Check CLI command name

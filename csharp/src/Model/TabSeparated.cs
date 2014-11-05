@@ -129,39 +129,27 @@ namespace jurbano.Allcea.Model
 
         void IWriter<AbsoluteEffectivenessEstimate>.Write(TextWriter tw, IEnumerable<AbsoluteEffectivenessEstimate> estimates)
         {
-            IConfidenceEstimator confidence = new NormalConfidenceEstimator();
-            List<double> confidences = new List<double>();
             tw.WriteLine(string.Join("\t", "Sys", "E", "Var", "[E", "E]", "Conf"));
             foreach (var estimate in estimates) {
-                double conf = confidence.EstimateAbsoluteConfidence(estimate.Expectation, estimate.Variance, .01);
-                confidences.Add(conf);
-                double[] interval = confidence.EstimateInterval(estimate.Expectation, estimate.Variance, .95);
-
                 tw.WriteLine(string.Join("\t", estimate.System,
                         estimate.Expectation.ToString(this._doubleFormat, CultureInfo.InvariantCulture), estimate.Variance.ToString(this._doubleFormat, CultureInfo.InvariantCulture),
-                        interval[0].ToString(this._doubleFormat, CultureInfo.InvariantCulture), interval[1].ToString(this._doubleFormat, CultureInfo.InvariantCulture),
-                        conf.ToString(this._doubleFormat, CultureInfo.InvariantCulture), this.GetConfidenceCode(conf)));
+                        estimate.Interval[0].ToString(this._doubleFormat, CultureInfo.InvariantCulture), estimate.Interval[1].ToString(this._doubleFormat, CultureInfo.InvariantCulture),
+                        estimate.Confidence.ToString(this._doubleFormat, CultureInfo.InvariantCulture), this.GetConfidenceCode(estimate.Confidence)));
             }
             tw.WriteLine();
-            tw.WriteLine("Average Confidence: " + confidences.Average().ToString(this._doubleFormat, CultureInfo.InvariantCulture));
+            tw.WriteLine("Average Confidence: " + estimates.Average(e => e.Confidence).ToString(this._doubleFormat, CultureInfo.InvariantCulture));
         }        
         void IWriter<RelativeEffectivenessEstimate>.Write(TextWriter tw, IEnumerable<RelativeEffectivenessEstimate> estimates)
         {
-            IConfidenceEstimator confidence = new NormalConfidenceEstimator();
-            List<double> confidences = new List<double>();
             tw.WriteLine(string.Join("\t", "SysA", "SysB", "E", "Var", "[E", "E]", "Conf"));
             foreach (var estimate in estimates) {
-                double conf = confidence.EstimateRelativeConfidence(estimate.Expectation, estimate.Variance, 0);
-                confidences.Add(conf);
-                double[] interval = confidence.EstimateInterval(estimate.Expectation, estimate.Variance, .95);
-
                 tw.WriteLine(string.Join("\t", estimate.SystemA, estimate.SystemB,
                         estimate.Expectation.ToString(this._doubleFormat, CultureInfo.InvariantCulture), estimate.Variance.ToString(this._doubleFormat, CultureInfo.InvariantCulture),
-                        interval[0].ToString(this._doubleFormat, CultureInfo.InvariantCulture), interval[1].ToString(this._doubleFormat, CultureInfo.InvariantCulture),
-                        conf.ToString(this._doubleFormat, CultureInfo.InvariantCulture), this.GetConfidenceCode(conf)));
+                        estimate.Interval[0].ToString(this._doubleFormat, CultureInfo.InvariantCulture), estimate.Interval[1].ToString(this._doubleFormat, CultureInfo.InvariantCulture),
+                        estimate.Confidence.ToString(this._doubleFormat, CultureInfo.InvariantCulture), this.GetConfidenceCode(estimate.Confidence)));
             }
             tw.WriteLine();
-            tw.WriteLine("Average Confidence: " + confidences.Average().ToString(this._doubleFormat, CultureInfo.InvariantCulture));
+            tw.WriteLine("Average Confidence: " + estimates.Average(e => e.Confidence).ToString(this._doubleFormat, CultureInfo.InvariantCulture));
         }
         protected string GetConfidenceCode(double confidence)
         {

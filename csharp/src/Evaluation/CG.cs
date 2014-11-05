@@ -36,21 +36,21 @@ namespace jurbano.Allcea.Evaluation
             this.MaxRelevance = maxrelevance;
         }
 
-        public RelativeEffectivenessEstimate Estimate(Run runA, Run runB, IRelevanceEstimator estimator)
+        public RelativeEffectivenessEstimate Estimate(Run runA, Run runB, IRelevanceEstimator relEstimator, IConfidenceEstimator confEstimator)
         {
             double e = 0, var = 0;
 
             // Traverse docs retrieved by A
             HashSet<string> inRunA = new HashSet<string>(); // retrieved by run A
             foreach (string doc in runA.Documents) {
-                RelevanceEstimate docEst = estimator.Estimate(runA.Query, doc);
+                RelevanceEstimate docEst = relEstimator.Estimate(runA.Query, doc);
                 e += docEst.Expectation;
                 var += docEst.Variance;
                 inRunA.Add(doc);
             }
             // Traverse docs retrieved by B
             foreach (string doc in runB.Documents) {
-                RelevanceEstimate docEst = estimator.Estimate(runB.Query, doc);
+                RelevanceEstimate docEst = relEstimator.Estimate(runB.Query, doc);
                 e -= docEst.Expectation;
                 if (inRunA.Contains(doc)) {
                     // If retrieved in both runs, does not contribute to variance
@@ -66,15 +66,15 @@ namespace jurbano.Allcea.Evaluation
             e /= this.MaxRelevance;
             var /= this.MaxRelevance * this.MaxRelevance;
 
-            return new RelativeEffectivenessEstimate(runA.System, runB.System, runA.Query, e, var);
+            return new RelativeEffectivenessEstimate(runA.System, runB.System, runA.Query, e, var, confEstimator.EstimateInterval(e, var), confEstimator.EstimateRelativeConfidence(e, var));
         }
-        public AbsoluteEffectivenessEstimate Estimate(Run run, IRelevanceEstimator estimator)
+        public AbsoluteEffectivenessEstimate Estimate(Run run, IRelevanceEstimator relEstimator, IConfidenceEstimator confEstimator)
         {
             double e = 0, var = 0;
 
             // Traverse docs retrieved
             foreach (string doc in run.Documents) {
-                RelevanceEstimate docEst = estimator.Estimate(run.Query, doc);
+                RelevanceEstimate docEst = relEstimator.Estimate(run.Query, doc);
                 e += docEst.Expectation;
                 var += docEst.Variance;
             }
@@ -85,7 +85,7 @@ namespace jurbano.Allcea.Evaluation
             e /= this.MaxRelevance;
             var /= this.MaxRelevance * this.MaxRelevance;
 
-            return new AbsoluteEffectivenessEstimate(run.System, run.Query, e, var);
+            return new AbsoluteEffectivenessEstimate(run.System, run.Query, e, var, confEstimator.EstimateInterval(e, var), confEstimator.EstimateAbsoluteConfidence(e, var));
         }
     }
 }

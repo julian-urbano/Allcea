@@ -37,6 +37,7 @@ namespace jurbano.Allcea.Cli
         protected string _judgedPath;
         protected string _estimatedPath;
         protected int _decimalDigits;
+        protected IConfidenceEstimator _confEstimator;
 
         public EvaluateCommand()
         {
@@ -44,6 +45,8 @@ namespace jurbano.Allcea.Cli
             this.Options.AddOption(OptionBuilder.Factory.IsRequired().HasArg().WithArgName("file").WithDescription("path to the file with system runs.").Create("i"));
             this.Options.AddOption(OptionBuilder.Factory.HasArg().WithArgName("file").WithDescription("path to file with known judgments.").Create("j"));
             this.Options.AddOption(OptionBuilder.Factory.IsRequired().HasArg().WithArgName("file").WithDescription("path to the file with estimated judgments.").Create("e"));
+            this.Options.AddOption(OptionBuilder.Factory.HasArg().WithArgName("conf").WithDescription("confidence level for interval estimates (defaults to " + Allcea.DEFAULT_CONFIDENCE + ").").Create("c"));
+            this.Options.AddOption(OptionBuilder.Factory.HasArgs(2).WithArgName("rel> <abs").WithDescription("target effect sizes to compute confidence (defaults to " + Allcea.DEFAULT_RELATIVE_SIZE + " and " + Allcea.DEFAULT_ABSOLUTE_SIZE + ").").Create("s"));
             this.Options.AddOption(OptionBuilder.Factory.HasArg().WithArgName("digits").WithDescription("number of fractional digits to output (defaults to " + Allcea.DEFAULT_DECIMAL_DIGITS + ")").Create("d"));
             this.Options.AddOption(OptionBuilder.Factory.WithDescription("shows this help message.").Create("h"));
 
@@ -51,10 +54,34 @@ namespace jurbano.Allcea.Cli
             this._judgedPath = null;
             this._estimatedPath = null;
             this._decimalDigits = Allcea.DEFAULT_DECIMAL_DIGITS;
+            this._confEstimator = null;
         }
 
         public void CheckOptions(CommandLine cmd)
         {
+            // Confidence estimator
+            double confidence = Allcea.DEFAULT_CONFIDENCE;
+            double sizeRel = Allcea.DEFAULT_RELATIVE_SIZE;
+            double sizeAbs = Allcea.DEFAULT_ABSOLUTE_SIZE;
+            if (cmd.HasOption('c')) {
+                string confidenceString = cmd.GetOptionValue('c');
+                if (!Double.TryParse(confidenceString, out confidence) || confidence < 0 || confidence > 1) {
+                    throw new ArgumentException("'" + confidenceString + "' is not a valid confidence level for interval estimates.");
+                }
+            }
+            if (cmd.HasOption('s')) {
+                string[] sizeStrings = cmd.GetOptionValues('s');
+                if (sizeStrings.Length != 2) {
+                    throw new ArgumentException("Must provide two target effect sizes: relative and absolute.");
+                }
+                if (!Double.TryParse(sizeStrings[0], out sizeRel) || sizeRel < 0 || sizeRel > 1) {
+                    throw new ArgumentException("'" + sizeStrings[1] + "' is not a valid target relative effect size.");
+                }
+                if(!Double.TryParse(sizeStrings[1], out sizeAbs) || sizeAbs < 0 || sizeAbs > 1) {
+                    throw new ArgumentException("'" + sizeStrings[1] + "' is not a valid target absolute effect size.");
+                }
+            }
+            this._confEstimator = new NormalConfidenceEstimator(confidence, sizeRel, sizeAbs);
             // Double format
             if (cmd.HasOption('d')) {
                 string digitsString = cmd.GetOptionValue('d');
@@ -112,7 +139,7 @@ namespace jurbano.Allcea.Cli
             foreach (var sqRun in sqRuns) {
                 Dictionary<string, AbsoluteEffectivenessEstimate> qAbs = new Dictionary<string, AbsoluteEffectivenessEstimate>();
                 foreach (var qRun in sqRun.Value) {
-                    qAbs.Add(qRun.Key, measure.Estimate(qRun.Value, store));
+                    qAbs.Add(qRun.Key, measure.Estimate(qRun.Value, store, this._confEstimator));
                 }
                 sqAbsEstimates.Add(sqRun.Key, qAbs);
             }
@@ -123,7 +150,8 @@ namespace jurbano.Allcea.Cli
                 double var = sqAbsEst.Value.Sum(qAbsEst => qAbsEst.Value.Variance);
                 e /= sqAbsEst.Value.Count;
                 var /= sqAbsEst.Value.Count * sqAbsEst.Value.Count;
-                absSorted.Add(new AbsoluteEffectivenessEstimate(sqAbsEst.Key, "[all]", e, var));
+                absSorted.Add(new AbsoluteEffectivenessEstimate(sqAbsEst.Key, "[all]", e, var,
+                    this._confEstimator.EstimateInterval(e, var), this._confEstimator.EstimateAbsoluteConfidence(e, var)));
             }
             absSorted = absSorted.OrderByDescending(est => est.Expectation).ToList();
 
@@ -139,7 +167,7 @@ namespace jurbano.Allcea.Cli
                     string sysB = absSorted[j].System;
                     var runsB = sqRuns[sysB];
                     foreach (var qRun in runsA) {
-                        qRelEstimates.Add(qRun.Key, measure.Estimate(qRun.Value, runsB[qRun.Key], store));
+                        qRelEstimates.Add(qRun.Key, measure.Estimate(qRun.Value, runsB[qRun.Key], store, this._confEstimator));
                     }
                     sqRelEstimates.Add(sysB, qRelEstimates);
                 }
@@ -157,7 +185,8 @@ namespace jurbano.Allcea.Cli
                     double var = qRelEstimates.Values.Sum(relEst => relEst.Variance);
                     e /= qRelEstimates.Values.Count;
                     var /= qRelEstimates.Values.Count * qRelEstimates.Values.Count;
-                    relSorted.Add(new RelativeEffectivenessEstimate(sysA, sysB, "[all]", e, var));
+                    relSorted.Add(new RelativeEffectivenessEstimate(sysA, sysB, "[all]", e, var,
+                        this._confEstimator.EstimateInterval(e, var), this._confEstimator.EstimateRelativeConfidence(e, var)));
                 }
             }
 

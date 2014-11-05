@@ -15,7 +15,7 @@
 
 namespace jurbano.Allcea.Model
 {
-    [global::System.Diagnostics.DebuggerDisplay("Systems:{SystemA}-{SystemB}, Query:{Query}, E={Expectation}, Var={Variance}")]
+    [global::System.Diagnostics.DebuggerDisplay("Systems:{SystemA}-{SystemB}, Query:{Query}, E={Expectation} [{Interval[0]},{Interval[1]}], Var={Variance}({Conf})")]
     public class RelativeEffectivenessEstimate
     {
         public string SystemA { get; protected set; }
@@ -23,14 +23,18 @@ namespace jurbano.Allcea.Model
         public string Query { get; protected set; }
         public double Expectation { get; protected set; }
         public double Variance { get; protected set; }
+        public double[] Interval { get; protected set; }
+        public double Confidence { get; protected set; }
 
-        public RelativeEffectivenessEstimate(string systemA, string systemB, string query, double e, double var)
+        public RelativeEffectivenessEstimate(string systemA, string systemB, string query, double e, double var, double[] interval, double conf)
         {
             this.SystemA = systemA;
             this.SystemB = systemB;
             this.Query = query;
             this.Expectation = e;
             this.Variance = var;
+            this.Interval = interval;
+            this.Confidence = conf;
         }
     }
 }
