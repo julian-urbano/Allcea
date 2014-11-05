@@ -43,11 +43,11 @@ namespace jurbano.Allcea.Cli
         {
             this.Options = new Options();
             this.Options.AddOption(OptionBuilder.Factory.IsRequired().HasArg().WithArgName("file").WithDescription("path to the file with system runs.").Create("i"));
-            this.Options.AddOption(OptionBuilder.Factory.HasArg().WithArgName("file").WithDescription("path to file with known judgments.").Create("j"));
+            this.Options.AddOption(OptionBuilder.Factory.HasArg().WithArgName("file").WithDescription("optional path to file with known judgments.").Create("j"));
             this.Options.AddOption(OptionBuilder.Factory.IsRequired().HasArg().WithArgName("file").WithDescription("path to the file with estimated judgments.").Create("e"));
-            this.Options.AddOption(OptionBuilder.Factory.HasArg().WithArgName("conf").WithDescription("confidence level for interval estimates (defaults to " + Allcea.DEFAULT_CONFIDENCE + ").").Create("c"));
-            this.Options.AddOption(OptionBuilder.Factory.HasArgs(2).WithArgName("rel> <abs").WithDescription("target effect sizes to compute confidence (defaults to " + Allcea.DEFAULT_RELATIVE_SIZE + " and " + Allcea.DEFAULT_ABSOLUTE_SIZE + ").").Create("s"));
-            this.Options.AddOption(OptionBuilder.Factory.HasArg().WithArgName("digits").WithDescription("number of fractional digits to output (defaults to " + Allcea.DEFAULT_DECIMAL_DIGITS + ")").Create("d"));
+            this.Options.AddOption(OptionBuilder.Factory.HasArg().WithArgName("conf").WithDescription("optional confidence level for interval estimates (defaults to " + Allcea.DEFAULT_CONFIDENCE + ").").Create("c"));
+            this.Options.AddOption(OptionBuilder.Factory.HasArgs(2).WithArgName("rel> <abs").WithDescription("optional target effect sizes to compute confidence (defaults to " + Allcea.DEFAULT_RELATIVE_SIZE + " and " + Allcea.DEFAULT_ABSOLUTE_SIZE + ").").Create("s"));
+            this.Options.AddOption(OptionBuilder.Factory.HasArg().WithArgName("digits").WithDescription("optional number of fractional digits to output (defaults to " + Allcea.DEFAULT_DECIMAL_DIGITS + ")").Create("d"));
             this.Options.AddOption(OptionBuilder.Factory.WithDescription("shows this help message.").Create("h"));
 
             this._inputPath = null;

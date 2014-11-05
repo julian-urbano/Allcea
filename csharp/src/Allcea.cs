@@ -57,7 +57,9 @@ namespace jurbano.Allcea
                     case "evaluate":
                         command = new EvaluateCommand();
                         break;
-                    //case "next": break;
+                    case "next":
+                        command = new NextCommand();
+                        break;
                     //case "simulate": break;
                     default:
                         Console.Error.WriteLine("'" + commandName + "' is not a valid Allcea command. See '" + Allcea.CLI_NAME_AND_VERSION + " -h'.");
@@ -121,8 +123,8 @@ namespace jurbano.Allcea
                 + "-h       shows this help message.",
                 "The available commands are (run '" + Allcea.CLI_NAME_AND_VERSION + " <command> -h' for specific help):"
                 + "\n  estimate  to estimate relevance judgments."
-                //+ "\n  evaluate  to evaluate systems with estimated judgments."
-                //+ "\n  next      to obtain the most informative documents to judge next."
+                + "\n  evaluate  to evaluate systems with estimated judgments."
+                + "\n  next      to obtain the most informative documents to judge next."
                 //+ "\n  simulate  to simulate the execution of estimate, evaluate and next."
                 );
         }
