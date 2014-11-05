@@ -37,6 +37,7 @@ namespace jurbano.Allcea.Cli
         protected string _inputPath;
         protected string _judgedPath;
         protected string _estimatedPath;
+        protected int _decimalDigits;
 
         public EvaluateCommand()
         {
@@ -44,15 +45,24 @@ namespace jurbano.Allcea.Cli
             this.Options.AddOption(OptionBuilder.Factory.IsRequired().HasArg().WithArgName("file").WithDescription("path to the file with system runs.").Create("i"));
             this.Options.AddOption(OptionBuilder.Factory.HasArg().WithArgName("file").WithDescription("path to file with known judgments.").Create("j"));
             this.Options.AddOption(OptionBuilder.Factory.IsRequired().HasArg().WithArgName("file").WithDescription("path to the file with estimated judgments.").Create("e"));
+            this.Options.AddOption(OptionBuilder.Factory.HasArg().WithArgName("digits").WithDescription("number of fractional digits to output (defaults to 4)").Create("d"));
             this.Options.AddOption(OptionBuilder.Factory.WithDescription("shows this help message.").Create("h"));
 
             this._inputPath = null;
             this._judgedPath = null;
             this._estimatedPath = null;
+            this._decimalDigits = Allcea.DEFAULT_DECIMAL_DIGITS;
         }
 
         public void CheckOptions(CommandLine cmd)
         {
+            // Double format
+            if (cmd.HasOption('d')) {
+                string digitsString = cmd.GetOptionValue('d');
+                if (!Int32.TryParse(digitsString, out this._decimalDigits) || this._decimalDigits < 0) {
+                    throw new ArgumentException("'" + digitsString + "' is not a valid number of decimal digits to output.");
+                }
+            }
             // Input file
             this._inputPath = cmd.GetOptionValue('i');
             if (!File.Exists(this._inputPath)) {
@@ -75,7 +85,7 @@ namespace jurbano.Allcea.Cli
         public void Run()
         {
             // Read files
-            IReadHelper reader = new TabSeparated();
+            IReadHelper reader = new TabSeparated(this._decimalDigits);
             IEnumerable<Run> runs = reader.ReadInputFile(this._inputPath);
             IEnumerable<RelevanceEstimate> judged = new RelevanceEstimate[] { };
             if (this._judgedPath != null) {
@@ -100,9 +110,9 @@ namespace jurbano.Allcea.Cli
             // Estimate per-query absolute effectiveness
             Dictionary<string, Dictionary<string, AbsoluteEffectivenessEstimate>> sqAbsEstimates =
                 new Dictionary<string, Dictionary<string, AbsoluteEffectivenessEstimate>>(); // [sys [query abs]]
-            foreach(var sqRun in sqRuns){
-                Dictionary<string,AbsoluteEffectivenessEstimate> qAbs = new Dictionary<string,AbsoluteEffectivenessEstimate>();
-                foreach(var qRun in sqRun.Value){
+            foreach (var sqRun in sqRuns) {
+                Dictionary<string, AbsoluteEffectivenessEstimate> qAbs = new Dictionary<string, AbsoluteEffectivenessEstimate>();
+                foreach (var qRun in sqRun.Value) {
                     qAbs.Add(qRun.Key, measure.Estimate(qRun.Value, store));
                 }
                 sqAbsEstimates.Add(sqRun.Key, qAbs);
@@ -121,15 +131,15 @@ namespace jurbano.Allcea.Cli
             // Estimate per-query relative effectiveness
             Dictionary<string, Dictionary<string, Dictionary<string, RelativeEffectivenessEstimate>>> ssqRelEstimates =
                 new Dictionary<string, Dictionary<string, Dictionary<string, RelativeEffectivenessEstimate>>>(); // [sysA [sysB [query rel]]]
-            for(int i = 0; i < absSorted.Count -1; i++){
+            for (int i = 0; i < absSorted.Count - 1; i++) {
                 string sysA = absSorted[i].System;
                 var runsA = sqRuns[sysA];
                 Dictionary<string, Dictionary<string, RelativeEffectivenessEstimate>> sqRelEstimates = new Dictionary<string, Dictionary<string, RelativeEffectivenessEstimate>>();
-                for(int j = i+1; j < absSorted.Count; j++){
+                for (int j = i + 1; j < absSorted.Count; j++) {
                     Dictionary<string, RelativeEffectivenessEstimate> qRelEstimates = new Dictionary<string, RelativeEffectivenessEstimate>();
                     string sysB = absSorted[j].System;
                     var runsB = sqRuns[sysB];
-                    foreach(var qRun in runsA){
+                    foreach (var qRun in runsA) {
                         qRelEstimates.Add(qRun.Key, measure.Estimate(qRun.Value, runsB[qRun.Key], store));
                     }
                     sqRelEstimates.Add(sysB, qRelEstimates);
@@ -153,10 +163,10 @@ namespace jurbano.Allcea.Cli
             }
 
             // Output estimates
-            IWriter<AbsoluteEffectivenessEstimate> writerAbs = new TabSeparated();
+            IWriter<AbsoluteEffectivenessEstimate> writerAbs = new TabSeparated(this._decimalDigits);
             writerAbs.Write(Console.Out, absSorted);
             Console.WriteLine();
-            IWriter<RelativeEffectivenessEstimate> writerRel = new TabSeparated();
+            IWriter<RelativeEffectivenessEstimate> writerRel = new TabSeparated(this._decimalDigits);
             writerRel.Write(Console.Out, relSorted);
         }
     }

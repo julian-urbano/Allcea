@@ -33,9 +33,11 @@ namespace jurbano.Allcea
             + "\nThis is free software, and you are welcome to redistribute it"
             + "\nunder the terms of the GNU Lesser General Public License version 3.";
 
+        public const int DEFAULT_DECIMAL_DIGITS = 4;
+
         public static void Main(string[] args)
         {
-            //args = @"evaluate -e ..\..\..\etc\estimates.txt -i ..\..\..\etc\runs.txt -j ..\..\..\etc\judgments-sample.txt".Split(' ');
+            //args = @"evaluate -d 10 -e ..\..\..\etc\estimates.txt -i ..\..\..\etc\runs.txt".Split(' '); //-j ..\..\..\etc\judgments-sample.txt".Split(' ');
 
             if (args.Length > 0) {
                 // Check CLI command name

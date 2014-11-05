@@ -46,6 +46,7 @@ namespace jurbano.Allcea.Cli
         protected string _inputPath;
         protected string _judgedPath;
         protected EstimatorWrapper _estimator;
+        protected int _decimalDigits;
 
         public EstimateCommand()
         {
@@ -54,15 +55,24 @@ namespace jurbano.Allcea.Cli
             this.Options.AddOption(OptionBuilder.Factory.IsRequired().HasArg().WithArgName("file").WithDescription("path to the file with system runs.").Create("i"));
             this.Options.AddOption(OptionBuilder.Factory.HasArg().WithArgName("file").WithDescription("path to file with known judgments (will not be estimated).").Create("j"));
             this.Options.AddOption(OptionBuilder.Factory.HasArgs().WithArgName("name=value").WithDescription("parameter to the estimator.").Create("p"));
+            this.Options.AddOption(OptionBuilder.Factory.HasArg().WithArgName("digits").WithDescription("number of fractional digits to output").Create("d"));
             this.Options.AddOption(OptionBuilder.Factory.WithDescription("shows this help message.").Create("h"));
 
             this._inputPath = null;
             this._judgedPath = null;
             this._estimator = null;
+            this._decimalDigits = Allcea.DEFAULT_DECIMAL_DIGITS;
         }
 
         public void CheckOptions(CommandLine cmd)
         {
+            // Double format
+            if (cmd.HasOption('d')) {
+                string digitsString = cmd.GetOptionValue('d');
+                if (!Int32.TryParse(digitsString, out this._decimalDigits) || this._decimalDigits < 0) {
+                    throw new ArgumentException("'" + digitsString + "' is not a valid number of decimal digits to output.");
+                }
+            }
             // Input file
             this._inputPath = cmd.GetOptionValue('i');
             if (!File.Exists(this._inputPath)) {
@@ -83,7 +93,7 @@ namespace jurbano.Allcea.Cli
         public void Run()
         {
             // Read files
-            IReadHelper reader = new TabSeparated();
+            IReadHelper reader = new TabSeparated(this._decimalDigits);
             IEnumerable<Run> runs = reader.ReadInputFile(this._inputPath);
             IEnumerable<RelevanceEstimate> judged = new RelevanceEstimate[] { };
             if (this._judgedPath != null) {
@@ -109,7 +119,7 @@ namespace jurbano.Allcea.Cli
                 }
             }
             // Output estimates
-            IWriter<RelevanceEstimate> estWriter = new TabSeparated();
+            IWriter<RelevanceEstimate> estWriter = new TabSeparated(this._decimalDigits);
             estWriter.Write(Console.Out, estimates);
         }
     }

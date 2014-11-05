@@ -30,6 +30,17 @@ namespace jurbano.Allcea.Model
         IWriter<RelativeEffectivenessEstimate>, IWriter<AbsoluteEffectivenessEstimate>,
         IReadHelper
     {
+        protected string _doubleFormat;
+
+        public TabSeparated(int decimalDigits)
+        {
+            this._doubleFormat = "0.";
+            for (int i = 0; i < decimalDigits; i++) {
+                this._doubleFormat += "#";
+            }
+        }
+        public TabSeparated() : this(Allcea.DEFAULT_DECIMAL_DIGITS) { }
+
         IEnumerable<Run> IReader<Run>.Read(TextReader tr)
         {
             List<Run> runs = new List<Run>();
@@ -78,8 +89,8 @@ namespace jurbano.Allcea.Model
                 tw.WriteLine(string.Join("\t",
                     e.Query,
                     e.Document,
-                    e.Expectation.ToString("0.####", CultureInfo.InvariantCulture),
-                    e.Variance.ToString("0.####", CultureInfo.InvariantCulture)));
+                    e.Expectation.ToString(this._doubleFormat, CultureInfo.InvariantCulture),
+                    e.Variance.ToString(this._doubleFormat, CultureInfo.InvariantCulture)));
             }
         }
         IEnumerable<RelevanceEstimate> IReader<RelevanceEstimate>.Read(TextReader tr)
@@ -127,12 +138,12 @@ namespace jurbano.Allcea.Model
                 double[] interval = confidence.EstimateInterval(estimate.Expectation, estimate.Variance, .95);
 
                 tw.WriteLine(string.Join("\t", estimate.System,
-                        estimate.Expectation.ToString("0.####"), estimate.Variance.ToString("0.####"),
-                        interval[0].ToString("0.####"), interval[1].ToString("0.####"),
-                        conf.ToString("0.####")));
+                        estimate.Expectation.ToString(this._doubleFormat, CultureInfo.InvariantCulture), estimate.Variance.ToString(this._doubleFormat, CultureInfo.InvariantCulture),
+                        interval[0].ToString(this._doubleFormat, CultureInfo.InvariantCulture), interval[1].ToString(this._doubleFormat, CultureInfo.InvariantCulture),
+                        conf.ToString(this._doubleFormat, CultureInfo.InvariantCulture)));
             }
             tw.WriteLine();
-            tw.WriteLine("Average Confidence: " + confidences.Average().ToString("0.####"));
+            tw.WriteLine("Average Confidence: " + confidences.Average().ToString(this._doubleFormat, CultureInfo.InvariantCulture));
         }
         
         void IWriter<RelativeEffectivenessEstimate>.Write(TextWriter tw, IEnumerable<RelativeEffectivenessEstimate> estimates)
@@ -146,12 +157,12 @@ namespace jurbano.Allcea.Model
                 double[] interval = confidence.EstimateInterval(estimate.Expectation, estimate.Variance, .95);
 
                 tw.WriteLine(string.Join("\t", estimate.SystemA, estimate.SystemB,
-                        estimate.Expectation.ToString("0.####"), estimate.Variance.ToString("0.####"),
-                        interval[0].ToString("0.####"), interval[1].ToString("0.####"),
-                        conf.ToString("0.####")));
+                        estimate.Expectation.ToString(this._doubleFormat, CultureInfo.InvariantCulture), estimate.Variance.ToString(this._doubleFormat, CultureInfo.InvariantCulture),
+                        interval[0].ToString(this._doubleFormat, CultureInfo.InvariantCulture), interval[1].ToString(this._doubleFormat, CultureInfo.InvariantCulture),
+                        conf.ToString(this._doubleFormat, CultureInfo.InvariantCulture)));
             }
             tw.WriteLine();
-            tw.WriteLine("Average Confidence: " + confidences.Average().ToString("0.####"));
+            tw.WriteLine("Average Confidence: " + confidences.Average().ToString(this._doubleFormat, CultureInfo.InvariantCulture));
         }
 
         IEnumerable<Metadata> IReader<Metadata>.Read(TextReader tr)
