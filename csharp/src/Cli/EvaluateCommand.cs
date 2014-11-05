@@ -110,14 +110,14 @@ namespace jurbano.Allcea.Cli
 
         public void Run()
         {
+            TabSeparated io = new TabSeparated(this._decimalDigits);
             // Read files
-            IReadHelper reader = new TabSeparated(this._decimalDigits);
-            IEnumerable<Run> runs = reader.ReadInputFile(this._inputPath);
+            IEnumerable<Run> runs = io.ReadInputFile(this._inputPath);
             IEnumerable<RelevanceEstimate> judged = new RelevanceEstimate[] { };
             if (this._judgedPath != null) {
-                judged = reader.ReadKnownJudgments(this._judgedPath);
+                judged = io.ReadKnownJudgments(this._judgedPath);
             }
-            IEnumerable<RelevanceEstimate> estimates = reader.ReadEstimatedJudgments(this._estimatedPath);
+            IEnumerable<RelevanceEstimate> estimates = io.ReadEstimatedJudgments(this._estimatedPath);
             // Instantiate estimate store and measure
             RelevanceEstimateStore store = new RelevanceEstimateStore(judged, estimates);
             IMeasure measure = new CG(100); //TODO: max relevance
@@ -125,12 +125,12 @@ namespace jurbano.Allcea.Cli
             // Re-structure runs for efficient access
             Dictionary<string, Dictionary<string, Run>> sqRuns = new Dictionary<string, Dictionary<string, Run>>(); // [sys [query run]]
             foreach (Run r in runs) {
-                Dictionary<string, Run> tempruns = null;
-                if (!sqRuns.TryGetValue(r.System, out tempruns)) {
-                    tempruns = new Dictionary<string, Run>();
-                    sqRuns.Add(r.System, tempruns);
+                Dictionary<string, Run> qRuns = null;
+                if (!sqRuns.TryGetValue(r.System, out qRuns)) {
+                    qRuns = new Dictionary<string, Run>();
+                    sqRuns.Add(r.System, qRuns);
                 }
-                tempruns.Add(r.Query, r);
+                qRuns.Add(r.Query, r);
             }
 
             // Estimate per-query absolute effectiveness
@@ -191,11 +191,15 @@ namespace jurbano.Allcea.Cli
             }
 
             // Output estimates
-            IWriter<AbsoluteEffectivenessEstimate> writerAbs = new TabSeparated(this._decimalDigits);
-            writerAbs.Write(Console.Out, absSorted);
+            Console.WriteLine("---------------------------");
+            Console.WriteLine("Mean Absolute Effectiveness");
+            Console.WriteLine("---------------------------");
+            ((IWriter<AbsoluteEffectivenessEstimate>)io).Write(Console.Out, absSorted);
             Console.WriteLine();
-            IWriter<RelativeEffectivenessEstimate> writerRel = new TabSeparated(this._decimalDigits);
-            writerRel.Write(Console.Out, relSorted);
+            Console.WriteLine("---------------------------");
+            Console.WriteLine("Mean Relative Effectiveness");
+            Console.WriteLine("---------------------------");
+            ((IWriter<RelativeEffectivenessEstimate>)io).Write(Console.Out, relSorted);
         }
     }
 }

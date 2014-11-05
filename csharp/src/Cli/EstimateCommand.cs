@@ -92,12 +92,12 @@ namespace jurbano.Allcea.Cli
 
         public void Run()
         {
+            TabSeparated io = new TabSeparated(this._decimalDigits);
             // Read files
-            IReadHelper reader = new TabSeparated(this._decimalDigits);
-            IEnumerable<Run> runs = reader.ReadInputFile(this._inputPath);
+            IEnumerable<Run> runs = io.ReadInputFile(this._inputPath);
             IEnumerable<RelevanceEstimate> judged = new RelevanceEstimate[] { };
             if (this._judgedPath != null) {
-                judged = reader.ReadKnownJudgments(this._judgedPath);
+                judged = io.ReadKnownJudgments(this._judgedPath);
             }
             // Initialize wrapped estimator
             this._estimator.Initialize(runs, judged);
@@ -119,8 +119,7 @@ namespace jurbano.Allcea.Cli
                 }
             }
             // Output estimates
-            IWriter<RelevanceEstimate> estWriter = new TabSeparated(this._decimalDigits);
-            estWriter.Write(Console.Out, estimates);
+            ((IWriter<RelevanceEstimate>)io).Write(Console.Out, estimates);
         }
     }
 }
