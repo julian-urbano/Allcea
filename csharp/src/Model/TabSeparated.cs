@@ -135,8 +135,7 @@ namespace jurbano.Allcea.Model
                         estimate.Interval[0].ToString(this._doubleFormat, CultureInfo.InvariantCulture), estimate.Interval[1].ToString(this._doubleFormat, CultureInfo.InvariantCulture),
                         estimate.Confidence.ToString(this._doubleFormat, CultureInfo.InvariantCulture), this.GetConfidenceCode(estimate.Confidence)));
             }
-            tw.WriteLine();
-            tw.WriteLine("Average Confidence: " + estimates.Average(e => e.Confidence).ToString(this._doubleFormat, CultureInfo.InvariantCulture));
+            tw.WriteLine("# Average Confidence: " + estimates.Average(e => e.Confidence).ToString(this._doubleFormat, CultureInfo.InvariantCulture));
         }        
         void IWriter<RelativeEffectivenessEstimate>.Write(TextWriter tw, IEnumerable<RelativeEffectivenessEstimate> estimates)
         {
@@ -147,8 +146,7 @@ namespace jurbano.Allcea.Model
                         estimate.Interval[0].ToString(this._doubleFormat, CultureInfo.InvariantCulture), estimate.Interval[1].ToString(this._doubleFormat, CultureInfo.InvariantCulture),
                         estimate.Confidence.ToString(this._doubleFormat, CultureInfo.InvariantCulture), this.GetConfidenceCode(estimate.Confidence)));
             }
-            tw.WriteLine();
-            tw.WriteLine("Average Confidence: " + estimates.Average(e => e.Confidence).ToString(this._doubleFormat, CultureInfo.InvariantCulture));
+            tw.WriteLine("# Average Confidence: " + estimates.Average(e => e.Confidence).ToString(this._doubleFormat, CultureInfo.InvariantCulture));
         }
         protected string GetConfidenceCode(double confidence)
         {

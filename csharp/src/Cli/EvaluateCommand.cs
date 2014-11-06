@@ -174,14 +174,12 @@ namespace jurbano.Allcea.Cli
 
             // Output estimates
             TabSeparated io = new TabSeparated(this._decimalDigits);
-            Console.WriteLine("---------------------------");
-            Console.WriteLine("Mean Absolute Effectiveness");
-            Console.WriteLine("---------------------------");
+            Console.WriteLine("# Mean Absolute Effectiveness");
+            Console.WriteLine("#############################");
             ((IWriter<AbsoluteEffectivenessEstimate>)io).Write(Console.Out, absSorted);
-            Console.WriteLine();
-            Console.WriteLine("---------------------------");
-            Console.WriteLine("Mean Relative Effectiveness");
-            Console.WriteLine("---------------------------");
+            Console.WriteLine("#");
+            Console.WriteLine("# Mean Relative Effectiveness");
+            Console.WriteLine("#############################");
             ((IWriter<RelativeEffectivenessEstimate>)io).Write(Console.Out, relSorted);
         }
     }
