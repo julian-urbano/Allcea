@@ -150,8 +150,12 @@ namespace jurbano.Allcea.Cli
                 double var = sqAbsEst.Value.Sum(qAbsEst => qAbsEst.Value.Variance);
                 e /= sqAbsEst.Value.Count;
                 var /= sqAbsEst.Value.Count * sqAbsEst.Value.Count;
-                absSorted.Add(new AbsoluteEffectivenessEstimate(sqAbsEst.Key, "[all]", e, var,
-                    this._confEstimator.EstimateInterval(e, var), this._confEstimator.EstimateAbsoluteConfidence(e, var)));
+
+                Estimate est = new Estimate(e, var);
+
+                absSorted.Add(new AbsoluteEffectivenessEstimate(sqAbsEst.Key, "[all]",
+                    e, var,
+                    this._confEstimator.EstimateInterval(est), this._confEstimator.EstimateAbsoluteConfidence(est)));
             }
             absSorted = absSorted.OrderByDescending(est => est.Expectation).ToList();
 
@@ -185,8 +189,12 @@ namespace jurbano.Allcea.Cli
                     double var = qRelEstimates.Values.Sum(relEst => relEst.Variance);
                     e /= qRelEstimates.Values.Count;
                     var /= qRelEstimates.Values.Count * qRelEstimates.Values.Count;
-                    relSorted.Add(new RelativeEffectivenessEstimate(sysA, sysB, "[all]", e, var,
-                        this._confEstimator.EstimateInterval(e, var), this._confEstimator.EstimateRelativeConfidence(e, var)));
+
+                    Estimate est = new Estimate(e, var);
+
+                    relSorted.Add(new RelativeEffectivenessEstimate(sysA, sysB, "[all]",
+                        e, var,
+                        this._confEstimator.EstimateInterval(est), this._confEstimator.EstimateRelativeConfidence(est)));
                 }
             }
 

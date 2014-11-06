@@ -36,19 +36,19 @@ namespace jurbano.Allcea.Evaluation
             this._sizeAbs = sizeAbs;
         }
 
-        public double[] EstimateInterval(double e, double var)
+        public double[] EstimateInterval(Estimate e)
         {
             double z = NormalConfidenceEstimator.Quantile((1.0 - this._confidence) / 2.0);
-            double len = Math.Abs(z * Math.Sqrt(var));
-            return new double[] { e - len, e + len };
+            double len = Math.Abs(z * Math.Sqrt(e.Variance));
+            return new double[] { e.Expectation - len, e.Expectation + len };
         }
-        public double EstimateRelativeConfidence(double e, double var)
+        public double EstimateRelativeConfidence(Estimate e)
         {
-            return NormalConfidenceEstimator.CDF((e-this._sizeRel) / Math.Sqrt(var));
+            return NormalConfidenceEstimator.CDF((e.Expectation-this._sizeRel) / Math.Sqrt(e.Variance));
         }
-        public double EstimateAbsoluteConfidence(double e, double var)
+        public double EstimateAbsoluteConfidence(Estimate e)
         {
-            return 1.0 - 2 * NormalConfidenceEstimator.CDF(-this._sizeAbs / Math.Sqrt(var));
+            return 1.0 - 2 * NormalConfidenceEstimator.CDF(-this._sizeAbs / Math.Sqrt(e.Variance));
         }
 
         protected static double CDF(double x)

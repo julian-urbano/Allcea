@@ -66,7 +66,11 @@ namespace jurbano.Allcea.Evaluation
             e /= this.MaxRelevance;
             var /= this.MaxRelevance * this.MaxRelevance;
 
-            return new RelativeEffectivenessEstimate(runA.System, runB.System, runA.Query, e, var, confEstimator.EstimateInterval(e, var), confEstimator.EstimateRelativeConfidence(e, var));
+            Estimate est = new Estimate(e, var);
+
+            return new RelativeEffectivenessEstimate(runA.System, runB.System, runA.Query,
+                e, var,
+                confEstimator.EstimateInterval(est), confEstimator.EstimateRelativeConfidence(est));
         }
         public AbsoluteEffectivenessEstimate Estimate(Run run, IRelevanceEstimator relEstimator, IConfidenceEstimator confEstimator)
         {
@@ -85,7 +89,11 @@ namespace jurbano.Allcea.Evaluation
             e /= this.MaxRelevance;
             var /= this.MaxRelevance * this.MaxRelevance;
 
-            return new AbsoluteEffectivenessEstimate(run.System, run.Query, e, var, confEstimator.EstimateInterval(e, var), confEstimator.EstimateAbsoluteConfidence(e, var));
+            Estimate est = new Estimate(e, var);
+
+            return new AbsoluteEffectivenessEstimate(run.System, run.Query,
+                e, var,
+                confEstimator.EstimateInterval(est), confEstimator.EstimateAbsoluteConfidence(est));
         }
     }
 }
