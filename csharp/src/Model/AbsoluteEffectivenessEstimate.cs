@@ -15,7 +15,7 @@
 
 namespace jurbano.Allcea.Model
 {
-    [global::System.Diagnostics.DebuggerDisplay("System:{System}, Query:{Query}, E={Expectation} [{Interval[0]},{Interval[1]}], Var={Variance}({Conf})")]
+    [global::System.Diagnostics.DebuggerDisplay("System:{System}, Query:{Query}, E={Expectation} [{Interval[0]},{Interval[1]}], Var={Variance}({Confidence})")]
     public class AbsoluteEffectivenessEstimate : Estimate
     {
         public string System { get; protected set; }

@@ -90,15 +90,7 @@ namespace jurbano.Allcea.Cli
             // Initialize wrapped estimator
             this._estimator.Initialize(runs, judged);
             // Compile list of all query-doc pairs
-            Dictionary<string, HashSet<string>> querydocs = new Dictionary<string, HashSet<string>>();
-            foreach (var run in runs) {
-                HashSet<string> docs = null;
-                if (!querydocs.TryGetValue(run.Query, out docs)) {
-                    docs = new HashSet<string>();
-                    querydocs.Add(run.Query, docs);
-                }
-                docs.UnionWith(run.Documents);
-            }
+            Dictionary<string, HashSet<string>> querydocs = AbstractCommand.ToQueryDocuments(runs);
             // Estimate relevance of all query-doc pairs
             List<RelevanceEstimate> estimates = new List<RelevanceEstimate>();
             foreach (var qd in querydocs) {

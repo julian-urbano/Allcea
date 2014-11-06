@@ -34,6 +34,7 @@ namespace jurbano.Allcea.Cli
         public abstract void CheckOptions(CommandLine cmd);
         public abstract void Run();
 
+        // Check CLI options
         internal static string CheckInputFile(string path)
         {
             return AbstractCommand.CheckFile(path, "Input");
@@ -110,7 +111,7 @@ namespace jurbano.Allcea.Cli
             }
             return sizeInt;
         }
-
+        // Read files
         internal static IEnumerable<Run> ReadInputFile(string file)
         {
             IEnumerable<Run> runs = null;
@@ -162,6 +163,33 @@ namespace jurbano.Allcea.Cli
                 throw new FormatException("Error reading metadata file: " + ex.Message, ex);
             }
             return metadata;
+        }
+        // Data re-structuring
+        internal static Dictionary<string, HashSet<string>> ToQueryDocuments(IEnumerable<Run> runs)
+        {
+            Dictionary<string, HashSet<string>> querydocs = new Dictionary<string, HashSet<string>>(); // [quey [doc]]
+            foreach (var run in runs) {
+                HashSet<string> docs = null;
+                if (!querydocs.TryGetValue(run.Query, out docs)) {
+                    docs = new HashSet<string>();
+                    querydocs.Add(run.Query, docs);
+                }
+                docs.UnionWith(run.Documents);
+            }
+            return querydocs;
+        }
+        internal static Dictionary<string, Dictionary<string, Run>> ToSystemQueryRuns(IEnumerable<Run> runs)
+        {
+            Dictionary<string, Dictionary<string, Run>> sqRuns = new Dictionary<string, Dictionary<string, Run>>(); // [sys [query run]]
+            foreach (Run r in runs) {
+                Dictionary<string, Run> qRuns = null;
+                if (!sqRuns.TryGetValue(r.System, out qRuns)) {
+                    qRuns = new Dictionary<string, Run>();
+                    sqRuns.Add(r.System, qRuns);
+                }
+                qRuns.Add(r.Query, r);
+            }
+            return sqRuns;
         }
     }
 }

@@ -92,6 +92,31 @@ namespace jurbano.Allcea.Cli
 
         public override void Run()
         {
+            // Read files
+            IEnumerable<Run> runs = AbstractCommand.ReadInputFile(this._inputPath);
+            IEnumerable<RelevanceEstimate> judged = new RelevanceEstimate[] { };
+            if (this._judgedPath != null) {
+                judged = AbstractCommand.ReadKnownJudgments(this._judgedPath);
+            }
+            IEnumerable<RelevanceEstimate> estimates = AbstractCommand.ReadEstimatedJudgments(this._estimatedPath);
+            // Instantiate estimate store and measure
+            RelevanceEstimateStore store = new RelevanceEstimateStore(judged, estimates);
+            IMeasure measure = new CG(100); //TODO: max relevance
+
+            // Compile list of all query-doc pairs
+            Dictionary<string, HashSet<string>> querydocs = AbstractCommand.ToQueryDocuments(runs);
+            // Remove judged query-docs
+            foreach (var j in judged) {
+                HashSet<string> docs = null;
+                if (querydocs.TryGetValue(j.Query, out docs)) {
+                    docs.Remove(j.Document);
+                    if (docs.Count == 0) {
+                        querydocs.Remove(j.Query);
+                    }
+                }
+            }
+
+
             throw new NotImplementedException();
         }
     }
