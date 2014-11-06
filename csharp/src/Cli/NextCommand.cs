@@ -25,10 +25,9 @@ using System.IO;
 
 namespace jurbano.Allcea.Cli
 {
-    public class NextCommand : ICommand
+    public class NextCommand : AbstractCommand
     {
-        public Options Options { get; protected set; }
-        public string OptionsFooter
+        public override string OptionsFooter
         {
             get { return null; }
         }
@@ -43,16 +42,16 @@ namespace jurbano.Allcea.Cli
 
         public NextCommand()
         {
-            this.Options = new Options();
-            this.Options.AddOption(OptionBuilder.Factory.IsRequired().HasArg().WithArgName("file").WithDescription("path to the file with system runs.").Create("i"));
-            this.Options.AddOption(OptionBuilder.Factory.HasArg().WithArgName("file").WithDescription("optional path to file with known judgments.").Create("j"));
-            this.Options.AddOption(OptionBuilder.Factory.IsRequired().HasArg().WithArgName("file").WithDescription("path to the file with estimated judgments.").Create("e"));
-            this.Options.AddOption(OptionBuilder.Factory.IsRequired().HasArg().WithArgName("target").WithDescription("type of estimates to target ('rel' or 'abs').").Create('t'));
-            this.Options.AddOption(OptionBuilder.Factory.IsRequired().HasArg().WithArgName("num").WithDescription("number of batches that will be judged.").Create('b'));
-            this.Options.AddOption(OptionBuilder.Factory.IsRequired().HasArg().WithArgName("num").WithDescription("number of documents per batch that will be judged.").Create('n'));
-            this.Options.AddOption(OptionBuilder.Factory.HasArg().WithArgName("conf").WithDescription("optional target average confidence on the estimates (defaults to " + Allcea.DEFAULT_CONFIDENCE + ").").Create("c"));
-            this.Options.AddOption(OptionBuilder.Factory.HasArg().WithArgName("size").WithDescription("optional target effect size to compute confidence (defaults to " + Allcea.DEFAULT_RELATIVE_SIZE + " for relative and " + Allcea.DEFAULT_ABSOLUTE_SIZE + " for absolute).").Create("s"));
-            this.Options.AddOption(OptionBuilder.Factory.WithDescription("shows this help message.").Create("h"));
+            base.Options = new Options();
+            base.Options.AddOption(OptionBuilder.Factory.IsRequired().HasArg().WithArgName("file").WithDescription("path to the file with system runs.").Create("i"));
+            base.Options.AddOption(OptionBuilder.Factory.HasArg().WithArgName("file").WithDescription("optional path to file with known judgments.").Create("j"));
+            base.Options.AddOption(OptionBuilder.Factory.IsRequired().HasArg().WithArgName("file").WithDescription("path to the file with estimated judgments.").Create("e"));
+            base.Options.AddOption(OptionBuilder.Factory.IsRequired().HasArg().WithArgName("target").WithDescription("type of estimates to target ('rel' or 'abs').").Create('t'));
+            base.Options.AddOption(OptionBuilder.Factory.IsRequired().HasArg().WithArgName("num").WithDescription("number of batches that will be judged.").Create('b'));
+            base.Options.AddOption(OptionBuilder.Factory.IsRequired().HasArg().WithArgName("num").WithDescription("number of documents per batch that will be judged.").Create('n'));
+            base.Options.AddOption(OptionBuilder.Factory.HasArg().WithArgName("conf").WithDescription("optional target average confidence on the estimates (defaults to " + Allcea.DEFAULT_CONFIDENCE + ").").Create("c"));
+            base.Options.AddOption(OptionBuilder.Factory.HasArg().WithArgName("size").WithDescription("optional target effect size to compute confidence (defaults to " + Allcea.DEFAULT_RELATIVE_SIZE + " for relative and " + Allcea.DEFAULT_ABSOLUTE_SIZE + " for absolute).").Create("s"));
+            base.Options.AddOption(OptionBuilder.Factory.WithDescription("shows this help message.").Create("h"));
 
             this._inputPath = null;
             this._judgedPath = null;
@@ -63,7 +62,7 @@ namespace jurbano.Allcea.Cli
             this._confEstimator = null;
         }
 
-        public void CheckOptions(CommandLine cmd)
+        public override void CheckOptions(CommandLine cmd)
         {
             // Target and confidence estimator
             double confidence = Allcea.DEFAULT_CONFIDENCE;
@@ -123,7 +122,7 @@ namespace jurbano.Allcea.Cli
             }
         }
 
-        public void Run()
+        public override void Run()
         {
             throw new NotImplementedException();
         }

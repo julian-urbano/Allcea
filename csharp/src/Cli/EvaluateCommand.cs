@@ -25,13 +25,9 @@ using jurbano.Allcea.Evaluation;
 
 namespace jurbano.Allcea.Cli
 {
-    public class EvaluateCommand : ICommand
+    public class EvaluateCommand : AbstractCommand
     {
-        public Options Options { get; protected set; }
-        public string OptionsFooter
-        {
-            get { return null; }
-        }
+        public override string OptionsFooter { get { return null; } }
 
         protected string _inputPath;
         protected string _judgedPath;
@@ -41,14 +37,14 @@ namespace jurbano.Allcea.Cli
 
         public EvaluateCommand()
         {
-            this.Options = new Options();
-            this.Options.AddOption(OptionBuilder.Factory.IsRequired().HasArg().WithArgName("file").WithDescription("path to the file with system runs.").Create("i"));
-            this.Options.AddOption(OptionBuilder.Factory.HasArg().WithArgName("file").WithDescription("optional path to file with known judgments.").Create("j"));
-            this.Options.AddOption(OptionBuilder.Factory.IsRequired().HasArg().WithArgName("file").WithDescription("path to the file with estimated judgments.").Create("e"));
-            this.Options.AddOption(OptionBuilder.Factory.HasArg().WithArgName("conf").WithDescription("optional confidence level for interval estimates (defaults to " + Allcea.DEFAULT_CONFIDENCE + ").").Create("c"));
-            this.Options.AddOption(OptionBuilder.Factory.HasArgs(2).WithArgName("rel> <abs").WithDescription("optional target effect sizes to compute confidence (defaults to " + Allcea.DEFAULT_RELATIVE_SIZE + " and " + Allcea.DEFAULT_ABSOLUTE_SIZE + ").").Create("s"));
-            this.Options.AddOption(OptionBuilder.Factory.HasArg().WithArgName("digits").WithDescription("optional number of fractional digits to output (defaults to " + Allcea.DEFAULT_DECIMAL_DIGITS + ")").Create("d"));
-            this.Options.AddOption(OptionBuilder.Factory.WithDescription("shows this help message.").Create("h"));
+            base.Options = new Options();
+            base.Options.AddOption(OptionBuilder.Factory.IsRequired().HasArg().WithArgName("file").WithDescription("path to the file with system runs.").Create("i"));
+            base.Options.AddOption(OptionBuilder.Factory.HasArg().WithArgName("file").WithDescription("optional path to file with known judgments.").Create("j"));
+            base.Options.AddOption(OptionBuilder.Factory.IsRequired().HasArg().WithArgName("file").WithDescription("path to the file with estimated judgments.").Create("e"));
+            base.Options.AddOption(OptionBuilder.Factory.HasArg().WithArgName("conf").WithDescription("optional confidence level for interval estimates (defaults to " + Allcea.DEFAULT_CONFIDENCE + ").").Create("c"));
+            base.Options.AddOption(OptionBuilder.Factory.HasArgs(2).WithArgName("rel> <abs").WithDescription("optional target effect sizes to compute confidence (defaults to " + Allcea.DEFAULT_RELATIVE_SIZE + " and " + Allcea.DEFAULT_ABSOLUTE_SIZE + ").").Create("s"));
+            base.Options.AddOption(OptionBuilder.Factory.HasArg().WithArgName("digits").WithDescription("optional number of fractional digits to output (defaults to " + Allcea.DEFAULT_DECIMAL_DIGITS + ")").Create("d"));
+            base.Options.AddOption(OptionBuilder.Factory.WithDescription("shows this help message.").Create("h"));
 
             this._inputPath = null;
             this._judgedPath = null;
@@ -57,7 +53,7 @@ namespace jurbano.Allcea.Cli
             this._confEstimator = null;
         }
 
-        public void CheckOptions(CommandLine cmd)
+        public override void CheckOptions(CommandLine cmd)
         {
             // Confidence estimator
             double confidence = Allcea.DEFAULT_CONFIDENCE;
@@ -77,7 +73,7 @@ namespace jurbano.Allcea.Cli
                 if (!Double.TryParse(sizeStrings[0], out sizeRel) || sizeRel < 0 || sizeRel >= 1) {
                     throw new ArgumentException("'" + sizeStrings[1] + "' is not a valid target relative effect size.");
                 }
-                if(!Double.TryParse(sizeStrings[1], out sizeAbs) || sizeAbs < 0 || sizeAbs >= 1) {
+                if (!Double.TryParse(sizeStrings[1], out sizeAbs) || sizeAbs < 0 || sizeAbs >= 1) {
                     throw new ArgumentException("'" + sizeStrings[1] + "' is not a valid target absolute effect size.");
                 }
             }
@@ -108,7 +104,7 @@ namespace jurbano.Allcea.Cli
             }
         }
 
-        public void Run()
+        public override void Run()
         {
             TabSeparated io = new TabSeparated(this._decimalDigits);
             // Read files

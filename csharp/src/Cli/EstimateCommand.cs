@@ -26,10 +26,9 @@ using jurbano.Allcea.Estimation;
 
 namespace jurbano.Allcea.Cli
 {
-    public class EstimateCommand : ICommand
+    public class EstimateCommand : AbstractCommand
     {
-        public Options Options { get; protected set; }
-        public string OptionsFooter
+        public override string OptionsFooter
         {
             get
             {
@@ -50,13 +49,13 @@ namespace jurbano.Allcea.Cli
 
         public EstimateCommand()
         {
-            this.Options = new Options();
-            this.Options.AddOption(OptionBuilder.Factory.IsRequired().HasArg().WithArgName("name").WithDescription("name of the estimator to use.").Create("e"));
-            this.Options.AddOption(OptionBuilder.Factory.IsRequired().HasArg().WithArgName("file").WithDescription("path to the file with system runs.").Create("i"));
-            this.Options.AddOption(OptionBuilder.Factory.HasArg().WithArgName("file").WithDescription("optional path to file with known judgments (will not be estimated).").Create("j"));
-            this.Options.AddOption(OptionBuilder.Factory.HasArgs().WithArgName("name=value").WithDescription("optional parameter to the estimator.").Create("p"));
-            this.Options.AddOption(OptionBuilder.Factory.HasArg().WithArgName("digits").WithDescription("optional number of fractional digits to output (defaults to " + Allcea.DEFAULT_DECIMAL_DIGITS + ")").Create("d"));
-            this.Options.AddOption(OptionBuilder.Factory.WithDescription("shows this help message.").Create("h"));
+            base.Options = new Options();
+            base.Options.AddOption(OptionBuilder.Factory.IsRequired().HasArg().WithArgName("name").WithDescription("name of the estimator to use.").Create("e"));
+            base.Options.AddOption(OptionBuilder.Factory.IsRequired().HasArg().WithArgName("file").WithDescription("path to the file with system runs.").Create("i"));
+            base.Options.AddOption(OptionBuilder.Factory.HasArg().WithArgName("file").WithDescription("optional path to file with known judgments (will not be estimated).").Create("j"));
+            base.Options.AddOption(OptionBuilder.Factory.HasArgs().WithArgName("name=value").WithDescription("optional parameter to the estimator.").Create("p"));
+            base.Options.AddOption(OptionBuilder.Factory.HasArg().WithArgName("digits").WithDescription("optional number of fractional digits to output (defaults to " + Allcea.DEFAULT_DECIMAL_DIGITS + ")").Create("d"));
+            base.Options.AddOption(OptionBuilder.Factory.WithDescription("shows this help message.").Create("h"));
 
             this._inputPath = null;
             this._judgedPath = null;
@@ -64,7 +63,7 @@ namespace jurbano.Allcea.Cli
             this._decimalDigits = Allcea.DEFAULT_DECIMAL_DIGITS;
         }
 
-        public void CheckOptions(CommandLine cmd)
+        public override void CheckOptions(CommandLine cmd)
         {
             // Double format
             if (cmd.HasOption('d')) {
@@ -90,7 +89,7 @@ namespace jurbano.Allcea.Cli
             this._estimator = new EstimatorWrapper(cmd.GetOptionValue('e'), parameters);
         }
 
-        public void Run()
+        public override void Run()
         {
             TabSeparated io = new TabSeparated(this._decimalDigits);
             // Read files

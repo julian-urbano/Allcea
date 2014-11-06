@@ -49,7 +49,7 @@ namespace jurbano.Allcea
             if (args.Length > 0) {
                 // Check CLI command name
                 string commandName = args[0].ToLower();
-                ICommand command = null;
+                AbstractCommand command = null;
                 switch (commandName) {
                     case "-h":
                         Allcea.PrintMainUsage(null);

@@ -13,16 +13,24 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with this program.  If not, see http://www.gnu.org/licenses/.
 
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using jurbano.Allcea.Estimation;
+using jurbano.Allcea.Model;
+using System.IO;
 using net.sf.dotnetcli;
 
 namespace jurbano.Allcea.Cli
 {
-    public interface ICommand
+    public abstract class AbstractCommand
     {
-        Options Options { get; }
-        string OptionsFooter { get; }
+        public Options Options { get; protected set; }
+        public abstract string OptionsFooter { get; }
 
-        void CheckOptions(CommandLine cmd);
-        void Run();
+        public abstract void CheckOptions(CommandLine cmd);
+        public abstract void Run();
     }
 }
