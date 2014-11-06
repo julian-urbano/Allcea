@@ -106,14 +106,13 @@ namespace jurbano.Allcea.Cli
 
         public override void Run()
         {
-            TabSeparated io = new TabSeparated(this._decimalDigits);
             // Read files
-            IEnumerable<Run> runs = io.ReadInputFile(this._inputPath);
+            IEnumerable<Run> runs = AbstractCommand.ReadInputFile(this._inputPath);
             IEnumerable<RelevanceEstimate> judged = new RelevanceEstimate[] { };
             if (this._judgedPath != null) {
-                judged = io.ReadKnownJudgments(this._judgedPath);
+                judged = AbstractCommand.ReadKnownJudgments(this._judgedPath);
             }
-            IEnumerable<RelevanceEstimate> estimates = io.ReadEstimatedJudgments(this._estimatedPath);
+            IEnumerable<RelevanceEstimate> estimates = AbstractCommand.ReadEstimatedJudgments(this._estimatedPath);
             // Instantiate estimate store and measure
             RelevanceEstimateStore store = new RelevanceEstimateStore(judged, estimates);
             IMeasure measure = new CG(100); //TODO: max relevance
@@ -195,6 +194,7 @@ namespace jurbano.Allcea.Cli
             }
 
             // Output estimates
+            TabSeparated io = new TabSeparated(this._decimalDigits);
             Console.WriteLine("---------------------------");
             Console.WriteLine("Mean Absolute Effectiveness");
             Console.WriteLine("---------------------------");

@@ -79,7 +79,6 @@
     <Compile Include="src\Evaluation\NormalConfidenceEstimator.cs" />
     <Compile Include="src\Model\AbsoluteEffectivenessEstimate.cs" />
     <Compile Include="src\Model\Estimate.cs" />
-    <Compile Include="src\Model\IReadHelper.cs" />
     <Compile Include="src\Model\IWriter.cs" />
     <Compile Include="src\Model\IReader.cs" />
     <Compile Include="src\Model\Metadata.cs" />

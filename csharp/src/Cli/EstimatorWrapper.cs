@@ -79,8 +79,7 @@ namespace jurbano.Allcea.Cli
                     break;
                 case "mout":
                     // read metadata
-                    IReadHelper reader = new TabSeparated();
-                    IEnumerable<Metadata> metadata = reader.ReadMetadata(this._metadataPath);
+                    IEnumerable<Metadata> metadata = AbstractCommand.ReadMetadata(this._metadataPath);
                     this._estimator = new MoutRelevanceEstimator(runs, metadata);
                     break;
             }
