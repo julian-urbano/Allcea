@@ -67,22 +67,12 @@ namespace jurbano.Allcea.Cli
         {
             // Double format
             if (cmd.HasOption('d')) {
-                string digitsString = cmd.GetOptionValue('d');
-                if (!Int32.TryParse(digitsString, out this._decimalDigits) || this._decimalDigits < 0) {
-                    throw new ArgumentException("'" + digitsString + "' is not a valid number of decimal digits to output.");
-                }
+                this._decimalDigits = AbstractCommand.CheckDigits(cmd.GetOptionValue('d'));
             }
-            // Input file
-            this._inputPath = cmd.GetOptionValue('i');
-            if (!File.Exists(this._inputPath)) {
-                throw new ArgumentException("Input file '" + this._inputPath + "' does not exist.");
-            }
-            // Judgments file
+            // Files
+            this._inputPath = AbstractCommand.CheckInputFile(cmd.GetOptionValue('i'));
             if (cmd.HasOption('j')) {
-                this._judgedPath = cmd.GetOptionValue('j');
-                if (!File.Exists(this._judgedPath)) {
-                    throw new ArgumentException("Known judgments file '" + this._judgedPath + "' does not exist.");
-                }
+                this._judgedPath = AbstractCommand.CheckJudgedFile(cmd.GetOptionValue('j'));
             }
             // Estimator
             Dictionary<string, string> parameters = Allcea.ParseNameValueParameters(cmd.GetOptionValues('p'));

@@ -60,48 +60,27 @@ namespace jurbano.Allcea.Cli
             double sizeRel = Allcea.DEFAULT_RELATIVE_SIZE;
             double sizeAbs = Allcea.DEFAULT_ABSOLUTE_SIZE;
             if (cmd.HasOption('c')) {
-                string confidenceString = cmd.GetOptionValue('c');
-                if (!Double.TryParse(confidenceString, out confidence) || confidence < 0 || confidence >= 1) {
-                    throw new ArgumentException("'" + confidenceString + "' is not a valid confidence level for interval estimates.");
-                }
+                confidence = AbstractCommand.CheckConfidence(cmd.GetOptionValue('c'));
             }
             if (cmd.HasOption('s')) {
                 string[] sizeStrings = cmd.GetOptionValues('s');
                 if (sizeStrings.Length != 2) {
                     throw new ArgumentException("Must provide two target effect sizes: relative and absolute.");
                 }
-                if (!Double.TryParse(sizeStrings[0], out sizeRel) || sizeRel < 0 || sizeRel >= 1) {
-                    throw new ArgumentException("'" + sizeStrings[1] + "' is not a valid target relative effect size.");
-                }
-                if (!Double.TryParse(sizeStrings[1], out sizeAbs) || sizeAbs < 0 || sizeAbs >= 1) {
-                    throw new ArgumentException("'" + sizeStrings[1] + "' is not a valid target absolute effect size.");
-                }
+                sizeRel = AbstractCommand.CheckRelativeSize(sizeStrings[0]);
+                sizeAbs = AbstractCommand.CheckAbsoluteSize(sizeStrings[1]);
             }
             this._confEstimator = new NormalConfidenceEstimator(confidence, sizeRel, sizeAbs);
             // Double format
             if (cmd.HasOption('d')) {
-                string digitsString = cmd.GetOptionValue('d');
-                if (!Int32.TryParse(digitsString, out this._decimalDigits) || this._decimalDigits < 0) {
-                    throw new ArgumentException("'" + digitsString + "' is not a valid number of decimal digits to output.");
-                }
+                this._decimalDigits = AbstractCommand.CheckDigits(cmd.GetOptionValue('d'));
             }
-            // Input file
-            this._inputPath = cmd.GetOptionValue('i');
-            if (!File.Exists(this._inputPath)) {
-                throw new ArgumentException("Input file '" + this._inputPath + "' does not exist.");
-            }
-            // Judgments file
+            // Files
+            this._inputPath = AbstractCommand.CheckInputFile(cmd.GetOptionValue('i'));
             if (cmd.HasOption('j')) {
-                this._judgedPath = cmd.GetOptionValue('j');
-                if (!File.Exists(this._judgedPath)) {
-                    throw new ArgumentException("Known judgments file '" + this._judgedPath + "' does not exist.");
-                }
+                this._judgedPath = AbstractCommand.CheckJudgedFile(cmd.GetOptionValue('j'));
             }
-            // Estimates file
-            this._estimatedPath = cmd.GetOptionValue('e');
-            if (!File.Exists(this._estimatedPath)) {
-                throw new ArgumentException("Estimated judgments file '" + this._estimatedPath + "' does not exist.");
-            }
+            this._estimatedPath = AbstractCommand.CheckEstimatedFile(cmd.GetOptionValue('e'));
         }
 
         public override void Run()

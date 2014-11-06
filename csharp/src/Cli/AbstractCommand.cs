@@ -22,6 +22,7 @@ using jurbano.Allcea.Estimation;
 using jurbano.Allcea.Model;
 using System.IO;
 using net.sf.dotnetcli;
+using jurbano.Allcea.Evaluation;
 
 namespace jurbano.Allcea.Cli
 {
@@ -33,7 +34,84 @@ namespace jurbano.Allcea.Cli
         public abstract void CheckOptions(CommandLine cmd);
         public abstract void Run();
 
-        public static IEnumerable<Run> ReadInputFile(string file)
+        internal static string CheckInputFile(string path)
+        {
+            return AbstractCommand.CheckFile(path, "Input");
+        }
+        internal static string CheckJudgedFile(string path)
+        {
+            return AbstractCommand.CheckFile(path, "Known judgments");
+        }
+        internal static string CheckEstimatedFile(string path)
+        {
+            return AbstractCommand.CheckFile(path, "Estimated judgments");
+        }
+        protected static string CheckFile(string path, string name)
+        {
+            if (!File.Exists(path)) {
+                throw new ArgumentException(name + " file '" + path + "' does not exist.");
+            }
+            return path;
+        }
+        internal static int CheckDigits(string digits)
+        {
+            int digitsInt = Allcea.DEFAULT_DECIMAL_DIGITS;
+            if (!Int32.TryParse(digits, out digitsInt) || digitsInt < 0) {
+                throw new ArgumentException("'" + digits + "' is not a valid number of fractional digits to output.");
+            }
+            return digitsInt;
+        }
+        internal static double CheckConfidence(string conf)
+        {
+            double confDouble = Allcea.DEFAULT_CONFIDENCE;
+            if (!Double.TryParse(conf, out confDouble) || confDouble <= 0 || confDouble >= 1) {
+                throw new ArgumentException("'" + conf + "' is not a valid confidence level.");
+            }
+            return confDouble;
+        }
+        internal static double CheckRelativeSize(string size)
+        {
+            double sizeDouble = Allcea.DEFAULT_RELATIVE_SIZE;
+            if (!Double.TryParse(size, out sizeDouble) || sizeDouble < 0) {
+                throw new ArgumentException("'" + size + "' is not a valid relative effect size.");
+            }
+            return sizeDouble;
+        }
+        internal static double CheckAbsoluteSize(string size)
+        {
+            double sizeDouble = Allcea.DEFAULT_ABSOLUTE_SIZE;
+            if (!Double.TryParse(size, out sizeDouble) || sizeDouble <= 0) {
+                throw new ArgumentException("'" + size + "' is not a valid absolute effect size.");
+            }
+            return sizeDouble;
+        }
+        internal static EvaluationTargets CheckTarget(string target)
+        {
+            if (target.StartsWith("rel", StringComparison.InvariantCultureIgnoreCase)) {
+                return EvaluationTargets.Relative;
+            } else if (target.StartsWith("abs", StringComparison.InvariantCultureIgnoreCase)) {
+                return EvaluationTargets.Absolute;
+            } else {
+                throw new ArgumentException("'" + target + "' is not a valid type of estimates to target.");
+            }
+        }
+        internal static int CheckBatchNumber(string num)
+        {
+            int numInt = Allcea.DEFAULT_NUMBER_OF_BATCHES;
+            if (!Int32.TryParse(num, out numInt) || numInt < 1) {
+                throw new ArgumentException("'" + num + "' is not a valid number of batches.");
+            }
+            return numInt;
+        }
+        internal static int CheckBatchSize(string size){
+            int sizeInt = Allcea.DEFAULT_BATCH_SIZE;
+            if (!Int32.TryParse(size, out sizeInt) || sizeInt < 1) {
+                throw new ArgumentException("'" + size + "' is not a valid number of documents per batch.");
+            }
+            return sizeInt;
+        }
+
+        internal static IEnumerable<Run> ReadInputFile(string file)
         {
             IEnumerable<Run> runs = null;
             try {
@@ -46,7 +124,7 @@ namespace jurbano.Allcea.Cli
             }
             return runs;
         }
-        public static IEnumerable<RelevanceEstimate> ReadKnownJudgments(string file)
+        internal static IEnumerable<RelevanceEstimate> ReadKnownJudgments(string file)
         {
             IEnumerable<RelevanceEstimate> judged = null;
             try {
@@ -59,7 +137,7 @@ namespace jurbano.Allcea.Cli
             }
             return judged;
         }
-        public static IEnumerable<RelevanceEstimate> ReadEstimatedJudgments(string file)
+        internal static IEnumerable<RelevanceEstimate> ReadEstimatedJudgments(string file)
         {
             IEnumerable<RelevanceEstimate> estimates = null;
             try {
@@ -72,7 +150,7 @@ namespace jurbano.Allcea.Cli
             }
             return estimates;
         }
-        public static IEnumerable<Metadata> ReadMetadata(string file)
+        internal static IEnumerable<Metadata> ReadMetadata(string file)
         {
             IEnumerable<Metadata> metadata;
             try {

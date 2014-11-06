@@ -67,59 +67,27 @@ namespace jurbano.Allcea.Cli
             // Target and confidence estimator
             double confidence = Allcea.DEFAULT_CONFIDENCE;
             if (cmd.HasOption('c')) {
-                string confidenceString = cmd.GetOptionValue('c');
-                if (!Double.TryParse(confidenceString, out confidence) || confidence < 0 || confidence >= 1) {
-                    throw new ArgumentException("'" + confidenceString + "' is not a valid target average confidence level.");
+                confidence = AbstractCommand.CheckConfidence(cmd.GetOptionValue('c'));
+            }
+            EvaluationTargets target = AbstractCommand.CheckTarget(cmd.GetOptionValue('t'));
+            double sizeRel = Allcea.DEFAULT_RELATIVE_SIZE;
+            double sizeAbs = Allcea.DEFAULT_ABSOLUTE_SIZE;
+            if (cmd.HasOption('s')) {
+                switch (target) {
+                    case EvaluationTargets.Relative: sizeRel = AbstractCommand.CheckRelativeSize(cmd.GetOptionValue('s')); break;
+                    case EvaluationTargets.Absolute: sizeAbs = AbstractCommand.CheckAbsoluteSize(cmd.GetOptionValue('s')); break;
                 }
             }
-            string targetString = cmd.GetOptionValue('t').ToLower();
-            if (targetString == "rel") {
-                double size = Allcea.DEFAULT_RELATIVE_SIZE;
-                if (cmd.HasOption('s')) {
-                    string sizeString = cmd.GetOptionValue('s');
-                    if (!Double.TryParse(sizeString, out size) || size < 0 || size >= 1) {
-                        throw new ArgumentException("'" + sizeString + "' is not a valid target relative effect size.");
-                    }
-                }
-                this._confEstimator = new NormalConfidenceEstimator(confidence, size, Allcea.DEFAULT_ABSOLUTE_SIZE);
-            } else if (targetString == "abs") {
-                double size = Allcea.DEFAULT_ABSOLUTE_SIZE;
-                if (cmd.HasOption('s')) {
-                    string sizeString = cmd.GetOptionValue('s');
-                    if (!Double.TryParse(sizeString, out size) || size < 0 || size >= 1) {
-                        throw new ArgumentException("'" + sizeString + "' is not a valid target absolute effect size.");
-                    }
-                }
-                this._confEstimator = new NormalConfidenceEstimator(confidence, Allcea.DEFAULT_RELATIVE_SIZE, size);
-            } else {
-                throw new ArgumentException("'" + targetString + "' is not a valid type of estimates to target.");
-            }
+            this._confEstimator = new NormalConfidenceEstimator(confidence, sizeRel, sizeAbs);
             // Batches
-            string batchesString = cmd.GetOptionValue('b');
-            if (!Int32.TryParse(batchesString, out this._batchNum) || this._batchNum < 1) {
-                throw new ArgumentException("'" + batchesString + "' is not a valid number of batches.");
-            }
-            string numString = cmd.GetOptionValue('n');
-            if (!Int32.TryParse(numString, out this._batchSize) || this._batchSize < 1) {
-                throw new ArgumentException("'" + numString + "' is not a valid number of documents per batch.");
-            }
-            // Input file
-            this._inputPath = cmd.GetOptionValue('i');
-            if (!File.Exists(this._inputPath)) {
-                throw new ArgumentException("Input file '" + this._inputPath + "' does not exist.");
-            }
-            // Judgments file
+            this._batchNum = AbstractCommand.CheckBatchNumber(cmd.GetOptionValue('b'));
+            this._batchSize = AbstractCommand.CheckBatchSize(cmd.GetOptionValue('n'));
+            // Files
+            this._inputPath = AbstractCommand.CheckInputFile(cmd.GetOptionValue('i'));
             if (cmd.HasOption('j')) {
-                this._judgedPath = cmd.GetOptionValue('j');
-                if (!File.Exists(this._judgedPath)) {
-                    throw new ArgumentException("Known judgments file '" + this._judgedPath + "' does not exist.");
-                }
+                this._judgedPath = AbstractCommand.CheckJudgedFile(cmd.GetOptionValue('j'));
             }
-            // Estimates file
-            this._estimatedPath = cmd.GetOptionValue('e');
-            if (!File.Exists(this._estimatedPath)) {
-                throw new ArgumentException("Estimated judgments file '" + this._estimatedPath + "' does not exist.");
-            }
+            this._estimatedPath = AbstractCommand.CheckEstimatedFile(cmd.GetOptionValue('e'));
         }
 
         public override void Run()
