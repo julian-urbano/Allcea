@@ -70,6 +70,7 @@
     <Compile Include="src\Cli\RelevanceEstimateStore.cs" />
     <Compile Include="src\Cli\SimulateCommand.cs" />
     <Compile Include="src\Estimation\IRelevanceEstimator.cs" />
+    <Compile Include="src\Estimation\MjudRelevanceEstimator.cs" />
     <Compile Include="src\Estimation\MoutRelevanceEstimator.cs" />
     <Compile Include="src\Estimation\OrdinalLogisticRegression.cs" />
     <Compile Include="src\Estimation\UniformRelevanceEstimator.cs" />
