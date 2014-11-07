@@ -53,6 +53,7 @@ namespace jurbano.Allcea.Cli
             base.Options.AddOption(OptionBuilder.Factory.IsRequired().HasArg().WithArgName("num").WithDescription("number of documents per batch that will be judged.").Create('n'));
             base.Options.AddOption(OptionBuilder.Factory.HasArg().WithArgName("conf").WithDescription("optional target average confidence on the estimates (defaults to " + Allcea.DEFAULT_CONFIDENCE + ").").Create("c"));
             base.Options.AddOption(OptionBuilder.Factory.HasArg().WithArgName("size").WithDescription("optional target effect size to compute confidence (defaults to " + Allcea.DEFAULT_RELATIVE_SIZE + " for relative and " + Allcea.DEFAULT_ABSOLUTE_SIZE + " for absolute).").Create("s"));
+            base.Options.AddOption(OptionBuilder.Factory.HasArg().WithArgName("digits").WithDescription("optional number of fractional digits to output (defaults to " + Allcea.DEFAULT_DECIMAL_DIGITS + ")").Create("d"));
             base.Options.AddOption(OptionBuilder.Factory.WithDescription("shows this help message.").Create("h"));
 
             this._inputPath = null;
@@ -82,6 +83,10 @@ namespace jurbano.Allcea.Cli
                 }
             }
             this._confEstimator = new NormalConfidenceEstimator(this._confidence, sizeRel, sizeAbs);
+            // Double format
+            if (cmd.HasOption('d')) {
+                this._decimalDigits = AbstractCommand.CheckDigits(cmd.GetOptionValue('d'));
+            }
             // Batches
             this._batchNum = AbstractCommand.CheckBatchNumber(cmd.GetOptionValue('b'));
             this._batchSize = AbstractCommand.CheckBatchSize(cmd.GetOptionValue('n'));
@@ -133,6 +138,7 @@ namespace jurbano.Allcea.Cli
             bool needsNext = false;
             // Re-structure runs for efficient access
             Dictionary<string, Dictionary<string, Run>> sqRuns = AbstractCommand.ToSystemQueryRuns(runs);
+
             if (this._target == EvaluationTargets.Relative) {
                 // Estimate per-query relative effectiveness
                 Dictionary<string, Dictionary<string, Dictionary<string, RelativeEffectivenessEstimate>>> ssqRels =
@@ -157,29 +163,29 @@ namespace jurbano.Allcea.Cli
                 }
             }
 
-            List<List<RelevanceEstimate>> batches = new List<List<RelevanceEstimate>>();
             if (needsNext) {
-                foreach (var dEstimates in qdEstimates) {
-                    string query = dEstimates.Key;
-                    var sorted = dEstimates.Value.Select(w => w.Value).OrderByDescending(w => w.Weight).ToList();
-                    int added = 0;
-                    while (sorted.Count > 0 && added < this._batchNum) {
-                        var next = sorted.Take(this._batchSize);
-                        batches.Add(new List<RelevanceEstimate>(next));
-                        sorted.RemoveRange(0, next.Count());
-                        added++;
-                    }
-                }
-                batches = batches.OrderByDescending(b => b.Sum(r => r.Weight)).ToList();
+                var batches = NextCommand.GetBatches(qdEstimates, this._batchNum, this._batchSize);
+                TabSeparated io = new TabSeparated(this._decimalDigits);
+                ((IWriter<List<RelevanceEstimate>>)io).Write(Console.Out, batches.Take(this._batchNum));
             }
-            for (int b = 0; b < this._batchNum && b < batches.Count; b++) {
-                Console.WriteLine("# Batch: " + (b + 1));
-                Console.WriteLine("# Weight: " + batches[b].Sum(r => r.Weight));
-                Console.WriteLine("###################");
-                foreach (var d in batches[b]) {
-                    Console.WriteLine(d.Query + "\t" + d.Document);
+        }
+
+        internal static IEnumerable<List<RelevanceEstimate>> GetBatches(Dictionary<string, Dictionary<string, RelevanceEstimate>> qdEstimates, int numBatches, int batchSize)
+        {
+            List<List<RelevanceEstimate>> batches = new List<List<RelevanceEstimate>>();
+            foreach (var dEstimates in qdEstimates) {
+                string query = dEstimates.Key;
+                var sorted = dEstimates.Value.Select(w => w.Value).OrderByDescending(w => w.Weight).ToList();
+                int added = 0;
+                while (sorted.Count > 0 && added < numBatches) {
+                    var next = sorted.Take(batchSize);
+                    batches.Add(new List<RelevanceEstimate>(next));
+                    sorted.RemoveRange(0, next.Count());
+                    added++;
                 }
             }
+            batches = batches.OrderByDescending(b => b.Sum(r => r.Weight)).ToList();
+            return batches;
         }
     }
 }

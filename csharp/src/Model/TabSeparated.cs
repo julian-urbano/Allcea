@@ -27,7 +27,8 @@ namespace jurbano.Allcea.Model
     public class TabSeparated : IReader<Run>,
         IWriter<RelevanceEstimate>, IReader<RelevanceEstimate>,
         IReader<Metadata>,
-        IWriter<RelativeEffectivenessEstimate>, IWriter<AbsoluteEffectivenessEstimate>
+        IWriter<RelativeEffectivenessEstimate>, IWriter<AbsoluteEffectivenessEstimate>,
+        IWriter<List<RelevanceEstimate>>
     {
         protected string _doubleFormat;
 
@@ -128,6 +129,8 @@ namespace jurbano.Allcea.Model
 
         void IWriter<AbsoluteEffectivenessEstimate>.Write(TextWriter tw, IEnumerable<AbsoluteEffectivenessEstimate> estimates)
         {
+            tw.WriteLine("# Mean Absolute Effectiveness");
+            tw.WriteLine("#############################");
             tw.WriteLine(string.Join("\t", "Sys", "E", "Var", "[E", "E]", "Conf"));
             foreach (var estimate in estimates) {
                 tw.WriteLine(string.Join("\t", estimate.System,
@@ -139,6 +142,8 @@ namespace jurbano.Allcea.Model
         }        
         void IWriter<RelativeEffectivenessEstimate>.Write(TextWriter tw, IEnumerable<RelativeEffectivenessEstimate> estimates)
         {
+            Console.WriteLine("# Mean Relative Effectiveness");
+            Console.WriteLine("#############################");
             tw.WriteLine(string.Join("\t", "SysA", "SysB", "E", "Var", "[E", "E]", "Conf"));
             foreach (var estimate in estimates) {
                 tw.WriteLine(string.Join("\t", estimate.SystemA, estimate.SystemB,
@@ -154,6 +159,23 @@ namespace jurbano.Allcea.Model
             if (confidence >= .95) return "**";
             if (confidence >= .90) return "*";
             return "";
+        }
+
+        void IWriter<List<RelevanceEstimate>>.Write(TextWriter tw, IEnumerable<List<RelevanceEstimate>> batches)
+        {
+            int batchNum = 1;
+            foreach (var batch in batches) {
+                tw.WriteLine("# Batch: " + batchNum);
+                tw.WriteLine("# Weight: " + batch.Sum(r => r.Weight));
+                tw.WriteLine("################");
+                tw.WriteLine(string.Join("\t","Query","Doc","E","Var","Weight"));
+                foreach (var est in batch) {
+                    tw.WriteLine(string.Join("\t", est.Query, est.Document,
+                        est.Expectation.ToString(this._doubleFormat, CultureInfo.InvariantCulture), est.Variance.ToString(this._doubleFormat, CultureInfo.InvariantCulture),
+                        est.Weight.ToString(this._doubleFormat, CultureInfo.InvariantCulture)));
+                }
+                batchNum++;
+            }
         }
 
         IEnumerable<Metadata> IReader<Metadata>.Read(TextReader tr)
