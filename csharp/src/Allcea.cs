@@ -44,7 +44,8 @@ namespace jurbano.Allcea
 
         public static void Main(string[] args)
         {
-            //args = @"evaluate -e ..\..\..\etc\estimates.txt -i ..\..\..\etc\runs.txt".Split(' '); //-j ..\..\..\etc\judgments-sample.txt".Split(' ');
+            //DateTime now = DateTime.Now;
+            //args = @"next -e ..\..\..\etc\estimates.txt -i ..\..\..\etc\runs.txt -t abso -b 10 -n 2 -d 2 -c .5".Split(' '); //-j ..\..\..\etc\judgments-sample.txt".Split(' ');
 
             if (args.Length > 0) {
                 // Check CLI command name
@@ -55,16 +56,10 @@ namespace jurbano.Allcea
                         Allcea.PrintMainUsage(null);
                         Environment.Exit(0);
                         break;
-                    case "estimate":
-                        command = new EstimateCommand();
-                        break;
-                    case "evaluate":
-                        command = new EvaluateCommand();
-                        break;
-                    case "next":
-                        command = new NextCommand();
-                        break;
-                    //case "simulate": break;
+                    case "estimate": command = new EstimateCommand(); break;
+                    case "evaluate": command = new EvaluateCommand(); break;
+                    case "next": command = new NextCommand(); break;
+                    case "simulate": command = new SimulateCommand(); break;
                     default:
                         Console.Error.WriteLine("'" + commandName + "' is not a valid Allcea command. See '" + Allcea.CLI_NAME_AND_VERSION + " -h'.");
                         Environment.Exit(1);
@@ -100,6 +95,7 @@ namespace jurbano.Allcea
                 Allcea.PrintMainUsage(null);
                 Environment.Exit(1);
             }
+            //Console.Error.WriteLine(DateTime.Now.Subtract(now).TotalMilliseconds);
         }
         public static Dictionary<string, string> ParseNameValueParameters(IEnumerable<string> args)
         {
@@ -123,14 +119,14 @@ namespace jurbano.Allcea
         {
             Allcea.PrintUsage(msg,
                 "<command> [-h] [...]",
-                "command  the command to run.\n"
-                + "-h       shows this help message.",
+                "command  the command to run."
+                + "\n-h       shows this help message.",
                 "The available commands are (run '" + Allcea.CLI_NAME_AND_VERSION + " <command> -h' for specific help):"
                 + "\n  estimate  to estimate relevance judgments."
                 + "\n  evaluate  to evaluate systems with estimated judgments."
-                + "\n  next      to obtain the most informative documents to judge next."
-                //+ "\n  simulate  to simulate the execution of estimate, evaluate and next."
-                );
+                + "\n  next      to obtain the net batch of documents to judge."
+                + "\n  simulate  to simulate the iterative execution of 'estimate', 'evaluate' and 'next'."
+            );
         }
         protected static void PrintUsage(string msg, string command, Options options, string footer)
         {

@@ -68,6 +68,7 @@
     <Compile Include="src\Cli\EvaluateCommand.cs" />
     <Compile Include="src\Cli\NextCommand.cs" />
     <Compile Include="src\Cli\RelevanceEstimateStore.cs" />
+    <Compile Include="src\Cli\SimulateCommand.cs" />
     <Compile Include="src\Estimation\IRelevanceEstimator.cs" />
     <Compile Include="src\Estimation\MoutRelevanceEstimator.cs" />
     <Compile Include="src\Estimation\OrdinalLogisticRegression.cs" />
