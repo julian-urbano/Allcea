@@ -184,7 +184,7 @@ namespace jurbano.Allcea.Cli
                     added++;
                 }
             }
-            batches = batches.OrderByDescending(b => b.Sum(r => r.Weight)).ToList();
+            batches = batches.OrderByDescending(b => b.Sum(r => r.Weight)).Take(numBatches).ToList();
             return batches;
         }
     }

@@ -40,12 +40,13 @@ namespace jurbano.Allcea.Cli
                 //+ "\n             -p judged=file  path to file with judgments already known.";
             }
         }
-        
+
         protected string _inputPath;
         protected string _judgedPath;
         protected EstimatorWrapper _estimator;
         protected int _decimalDigits;
         protected EvaluationTargets _target;
+        protected int _batchNum;
         protected int _batchSize;
         protected IConfidenceEstimator _confEstimator;
         protected double _confidence;
@@ -68,6 +69,7 @@ namespace jurbano.Allcea.Cli
             this._judgedPath = null;
             this._estimator = null;
             this._decimalDigits = Allcea.DEFAULT_DECIMAL_DIGITS;
+            this._batchNum = 1;
             this._batchSize = Allcea.DEFAULT_BATCH_SIZE;
             this._confEstimator = null;
             this._target = EvaluationTargets.Relative;
@@ -106,12 +108,100 @@ namespace jurbano.Allcea.Cli
 
         public override void Run()
         {
-            // Read files
+            // Read files, initialize store, estimator and measure
             IEnumerable<Run> runs = AbstractCommand.ReadInputFile(this._inputPath);
             RelevanceEstimateStore store = new RelevanceEstimateStore(AbstractCommand.ReadKnownJudgments(this._judgedPath));
-            // Initialize wrapped estimator
             this._estimator.Initialize(runs, new RelevanceEstimate[] { }); // No known judgments at this point
+            IMeasure measure = new CG(100); //TODO: max relevance
 
+            // Compile list of all query-doc-sys-rank tuples
+            Dictionary<string, Dictionary<string, Dictionary<string, int>>> qdsRanks = AbstractCommand.ToQueryDocumentSystemRanks(runs);
+            // Re-structure runs for efficient access
+            Dictionary<string, Dictionary<string, Run>> sqRuns = AbstractCommand.ToSystemQueryRuns(runs);
+            
+            // Estimate relevance of all query-doc pairs
+            Dictionary<string, Dictionary<string, RelevanceEstimate>> qdEstimates = new Dictionary<string, Dictionary<string, RelevanceEstimate>>();
+            foreach (var dsRanks in qdsRanks) {
+                string query = dsRanks.Key;
+                Dictionary<string, RelevanceEstimate> dEstimates = new Dictionary<string, RelevanceEstimate>();
+                foreach (var sRanks in dsRanks.Value) {
+                    string doc = sRanks.Key;
+                    dEstimates.Add(doc, this._estimator.Estimate(query,doc)); // Don't estimate yet, will do inside the loop
+                }
+                qdEstimates.Add(query, dEstimates);
+            }
+
+
+            bool needsNext = true;
+            double confidence = 0.5;
+            int iteration = 1, judged = 0;
+            do {
+                /* Evaluate */
+
+                if (this._target == EvaluationTargets.Relative) {
+                    // Estimate per-query relative effectiveness
+                    Dictionary<string, Dictionary<string, Dictionary<string, RelativeEffectivenessEstimate>>> ssqRels =
+                        EvaluateCommand.GetSystemSystemQueryRelatives(sqRuns, measure, this._estimator, this._confEstimator);
+                    // Average (already sorted)
+                    List<RelativeEffectivenessEstimate> relSorted = EvaluateCommand.GetSortedMeanRelatives(ssqRels, this._confEstimator);
+
+                    confidence = relSorted.Average(r => r.Confidence);
+                    if (confidence < this._confidence) {
+                        measure.ComputeQueryDocumentWeights(qdEstimates, qdsRanks, ssqRels);
+                    } else {
+                        needsNext = false;
+                    }
+                } else {
+                    // Estimate per-query absolute effectiveness
+                    Dictionary<string, Dictionary<string, AbsoluteEffectivenessEstimate>> sqAbss =
+                        EvaluateCommand.GetSystemQueryAbsolutes(sqRuns, measure, this._estimator, this._confEstimator);
+                    // Average and sort
+                    List<AbsoluteEffectivenessEstimate> absSorted = EvaluateCommand.GetSortedMeanAbsolutes(sqAbss, this._confEstimator);
+
+                    confidence = absSorted.Average(a => a.Confidence);
+                    if (confidence < this._confidence) {
+                        measure.ComputeQueryDocumentWeights(qdEstimates, qdsRanks, sqAbss);
+                    } else {
+                        needsNext = false;
+                    }
+                }
+
+                Console.WriteLine(iteration + " : Conf=" + confidence + " Judged=" + judged);
+                if (needsNext) {
+                    /* Next */
+
+                    var batches = NextCommand.GetBatches(qdEstimates, this._batchNum, this._batchSize);
+                    // "Judge" all batches
+                    foreach (var batch in batches) {
+                        Console.WriteLine(batch[0].Query + " : " + string.Join(" ", batch.Select(d => d.Document)));
+                        foreach (var doc in batch) {
+                            this._estimator.Update(store.Estimate(doc.Query, doc.Document));
+                            judged++;
+                            // Remove from list of pending
+                            var dEstimates = qdEstimates[doc.Query];
+                            dEstimates.Remove(doc.Document);
+                            if (dEstimates.Count == 0) {
+                                qdEstimates.Remove(doc.Query);
+                            }
+                        }
+                    }
+
+                    /* Re-estimate */
+
+                    // Re-estimate relevance of pending query-doc pairs
+                    foreach (var dEstimates in qdEstimates) {
+                        string query = dEstimates.Key;
+                        Dictionary<string, RelevanceEstimate> estimates = dEstimates.Value;
+                        foreach (string doc in estimates.Keys.ToArray()) {
+                            estimates[doc] = this._estimator.Estimate(query, doc);
+                        }
+                    }
+                }
+
+                iteration++;
+            } while (needsNext);
+
+            // TODO: output effectiveness estimates
         }
     }
 }
