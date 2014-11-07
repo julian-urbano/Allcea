@@ -100,6 +100,7 @@ namespace jurbano.Allcea.Cli
 
             // Re-structure runs for efficient access
             Dictionary<string, Dictionary<string, Run>> sqRuns = AbstractCommand.ToSystemQueryRuns(runs);
+
             // Estimate per-query absolute effectiveness
             Dictionary<string, Dictionary<string, AbsoluteEffectivenessEstimate>> sqAbss =
                 EvaluateCommand.GetSystemQueryAbsolutes(sqRuns, measure, store, this._confEstimator);
@@ -114,12 +115,7 @@ namespace jurbano.Allcea.Cli
 
             // Output estimates
             TabSeparated io = new TabSeparated(this._decimalDigits);
-            Console.WriteLine("# Mean Absolute Effectiveness");
-            Console.WriteLine("#############################");
             ((IWriter<AbsoluteEffectivenessEstimate>)io).Write(Console.Out, absSorted);
-            Console.WriteLine("#");
-            Console.WriteLine("# Mean Relative Effectiveness");
-            Console.WriteLine("#############################");
             ((IWriter<RelativeEffectivenessEstimate>)io).Write(Console.Out, relSorted);
         }
 
