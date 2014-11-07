@@ -25,45 +25,35 @@ namespace jurbano.Allcea.Cli
 {
     public class RelevanceEstimateStore : IRelevanceEstimator
     {
-        protected Dictionary<string, Dictionary<string, RelevanceEstimate>> _judged;
-        protected Dictionary<string, Dictionary<string, RelevanceEstimate>> _estimated;
+        protected Dictionary<string, Dictionary<string, RelevanceEstimate>> _estimates;
 
         public RelevanceEstimateStore(IEnumerable<RelevanceEstimate> judged, IEnumerable<RelevanceEstimate> estimated)
         {
-            // Re-structure known judgments
-            this._judged = new Dictionary<string, Dictionary<string, RelevanceEstimate>>();
-            foreach (var j in judged) {
-                Dictionary<string, RelevanceEstimate> q = null;
-                if (!this._judged.TryGetValue(j.Query, out q)) {
-                    q = new Dictionary<string, RelevanceEstimate>();
-                    this._judged.Add(j.Query, q);
-                }
-                q.Add(j.Document, j);
-            }
             // Re-structure estimated judgments
-            this._estimated = new Dictionary<string, Dictionary<string, RelevanceEstimate>>();
+            this._estimates = new Dictionary<string, Dictionary<string, RelevanceEstimate>>();
             foreach (var e in estimated) {
                 Dictionary<string, RelevanceEstimate> q = null;
-                if (!this._estimated.TryGetValue(e.Query, out q)) {
+                if (!this._estimates.TryGetValue(e.Query, out q)) {
                     q = new Dictionary<string, RelevanceEstimate>();
-                    this._estimated.Add(e.Query, q);
+                    this._estimates.Add(e.Query, q);
                 }
                 q.Add(e.Document, e);
+            }
+            // Override known judgments
+            foreach (var j in judged) {
+                Dictionary<string, RelevanceEstimate> q = null;
+                if (!this._estimates.TryGetValue(j.Query, out q)) {
+                    q = new Dictionary<string, RelevanceEstimate>();
+                    this._estimates.Add(j.Query, q);
+                }
+                q[j.Document] = j;
             }
         }
 
         public RelevanceEstimate Estimate(string query, string doc)
         {
-            // Check if it is already judged
             Dictionary<string, RelevanceEstimate> q = null;
-            if (this._judged.TryGetValue(query, out q)) {
-                RelevanceEstimate e = null;
-                if (q.TryGetValue(doc, out e)) {
-                    return e;
-                }
-            }
-            // If not, return the estimated judgments
-            if (this._estimated.TryGetValue(query, out q)) {
+            if (this._estimates.TryGetValue(query, out q)) {
                 RelevanceEstimate e = null;
                 if (q.TryGetValue(doc, out e)) {
                     return e;
