@@ -36,9 +36,11 @@ namespace jurbano.Allcea.Cli
         protected string _judgedPath;
         protected string _estimatedPath;
         protected int _decimalDigits;
+        protected EvaluationTargets _target;
         protected int _batchNum;
         protected int _batchSize;
         protected IConfidenceEstimator _confEstimator;
+        protected double _confidence;
 
         public NextCommand()
         {
@@ -60,25 +62,26 @@ namespace jurbano.Allcea.Cli
             this._batchNum = Allcea.DEFAULT_NUMBER_OF_BATCHES;
             this._batchSize = Allcea.DEFAULT_BATCH_SIZE;
             this._confEstimator = null;
+            this._target = EvaluationTargets.Relative;
+            this._confidence = Allcea.DEFAULT_CONFIDENCE;
         }
 
         public override void CheckOptions(CommandLine cmd)
         {
             // Target and confidence estimator
-            double confidence = Allcea.DEFAULT_CONFIDENCE;
             if (cmd.HasOption('c')) {
-                confidence = AbstractCommand.CheckConfidence(cmd.GetOptionValue('c'));
+                this._confidence = AbstractCommand.CheckConfidence(cmd.GetOptionValue('c'));
             }
-            EvaluationTargets target = AbstractCommand.CheckTarget(cmd.GetOptionValue('t'));
+            this._target = AbstractCommand.CheckTarget(cmd.GetOptionValue('t'));
             double sizeRel = Allcea.DEFAULT_RELATIVE_SIZE;
             double sizeAbs = Allcea.DEFAULT_ABSOLUTE_SIZE;
             if (cmd.HasOption('s')) {
-                switch (target) {
+                switch (this._target) {
                     case EvaluationTargets.Relative: sizeRel = AbstractCommand.CheckRelativeSize(cmd.GetOptionValue('s')); break;
                     case EvaluationTargets.Absolute: sizeAbs = AbstractCommand.CheckAbsoluteSize(cmd.GetOptionValue('s')); break;
                 }
             }
-            this._confEstimator = new NormalConfidenceEstimator(confidence, sizeRel, sizeAbs);
+            this._confEstimator = new NormalConfidenceEstimator(this._confidence, sizeRel, sizeAbs);
             // Batches
             this._batchNum = AbstractCommand.CheckBatchNumber(cmd.GetOptionValue('b'));
             this._batchSize = AbstractCommand.CheckBatchSize(cmd.GetOptionValue('n'));
@@ -100,24 +103,83 @@ namespace jurbano.Allcea.Cli
             }
             IEnumerable<RelevanceEstimate> estimates = AbstractCommand.ReadEstimatedJudgments(this._estimatedPath);
             // Instantiate estimate store and measure
-            RelevanceEstimateStore store = new RelevanceEstimateStore(judged, estimates);
+            RelevanceEstimateStore store = new RelevanceEstimateStore(estimates);
+            store.Update(judged);
             IMeasure measure = new CG(100); //TODO: max relevance
 
-            // Compile list of all query-doc pairs
-            Dictionary<string, HashSet<string>> querydocs = AbstractCommand.ToQueryDocuments(runs);
+            // Compile list of all query-doc-sys-rank tuples
+            Dictionary<string, Dictionary<string, Dictionary<string, int>>> qdsRanks = AbstractCommand.ToQueryDocumentSystemRanks(runs);
+            // Re-structure estimates
+            Dictionary<string, Dictionary<string, RelevanceEstimate>> qdEstimates = new Dictionary<string, Dictionary<string, RelevanceEstimate>>();
+            foreach (var est in estimates) {
+                Dictionary<string, RelevanceEstimate> dEstimates = null;
+                if (!qdEstimates.TryGetValue(est.Query, out dEstimates)) {
+                    dEstimates = new Dictionary<string, RelevanceEstimate>();
+                    qdEstimates.Add(est.Query, dEstimates);
+                }
+                dEstimates.Add(est.Document, est);
+            }
             // Remove judged query-docs
             foreach (var j in judged) {
-                HashSet<string> docs = null;
-                if (querydocs.TryGetValue(j.Query, out docs)) {
-                    docs.Remove(j.Document);
-                    if (docs.Count == 0) {
-                        querydocs.Remove(j.Query);
+                Dictionary<string, RelevanceEstimate> dEstimates = null;
+                if (qdEstimates.TryGetValue(j.Query, out dEstimates)) {
+                    dEstimates.Remove(j.Document);
+                    if (dEstimates.Count == 0) {
+                        qdEstimates.Remove(j.Query);
                     }
                 }
             }
 
+            bool needsNext = false;
+            // Re-structure runs for efficient access
+            Dictionary<string, Dictionary<string, Run>> sqRuns = AbstractCommand.ToSystemQueryRuns(runs);
+            if (this._target == EvaluationTargets.Relative) {
+                // Estimate per-query relative effectiveness
+                Dictionary<string, Dictionary<string, Dictionary<string, RelativeEffectivenessEstimate>>> ssqRels =
+                    EvaluateCommand.GetSystemSystemQueryRelatives(sqRuns, measure, store, this._confEstimator);
+                // Average (already sorted)
+                List<RelativeEffectivenessEstimate> relSorted = EvaluateCommand.GetSortedMeanRelatives(ssqRels, this._confEstimator);
 
-            throw new NotImplementedException();
+                if (relSorted.Average(r => r.Confidence) < this._confidence) {
+                    needsNext = true;
+                    measure.ComputeQueryDocumentWeights(qdEstimates, qdsRanks, ssqRels);
+                }
+            } else {
+                // Estimate per-query absolute effectiveness
+                Dictionary<string, Dictionary<string, AbsoluteEffectivenessEstimate>> sqAbss =
+                    EvaluateCommand.GetSystemQueryAbsolutes(sqRuns, measure, store, this._confEstimator);
+                // Average and sort
+                List<AbsoluteEffectivenessEstimate> absSorted = EvaluateCommand.GetSortedMeanAbsolutes(sqAbss, this._confEstimator);
+
+                if (absSorted.Average(a => a.Confidence) < this._confidence) {
+                    needsNext = true;
+                    measure.ComputeQueryDocumentWeights(qdEstimates, qdsRanks, sqAbss);
+                }
+            }
+
+            List<List<RelevanceEstimate>> batches = new List<List<RelevanceEstimate>>();
+            if (needsNext) {
+                foreach (var dEstimates in qdEstimates) {
+                    string query = dEstimates.Key;
+                    var sorted = dEstimates.Value.Select(w => w.Value).OrderByDescending(w => w.Weight).ToList();
+                    int added = 0;
+                    while (sorted.Count > 0 && added < this._batchNum) {
+                        var next = sorted.Take(this._batchSize);
+                        batches.Add(new List<RelevanceEstimate>(next));
+                        sorted.RemoveRange(0, next.Count());
+                        added++;
+                    }
+                }
+                batches = batches.OrderByDescending(b => b.Sum(r => r.Weight)).ToList();
+            }
+            for (int b = 0; b < this._batchNum && b < batches.Count; b++) {
+                Console.WriteLine("# Batch: " + (b + 1));
+                Console.WriteLine("# Weight: " + batches[b].Sum(r => r.Weight));
+                Console.WriteLine("###################");
+                foreach (var d in batches[b]) {
+                    Console.WriteLine(d.Query + "\t" + d.Document);
+                }
+            }
         }
     }
 }

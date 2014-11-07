@@ -32,5 +32,9 @@ namespace jurbano.Allcea.Evaluation
             Dictionary<string, Dictionary<string, RelevanceEstimate>> qdEstimates,
             Dictionary<string, Dictionary<string, Dictionary<string, int>>> qdsRanks,
             Dictionary<string, Dictionary<string, Dictionary<string, RelativeEffectivenessEstimate>>> ssqRels);
+        void ComputeQueryDocumentWeights(
+            Dictionary<string, Dictionary<string, RelevanceEstimate>> qdEstimates,
+            Dictionary<string, Dictionary<string, Dictionary<string, int>>> qdsRanks,
+            Dictionary<string, Dictionary<string, AbsoluteEffectivenessEstimate>> sqAbss);
     }
 }

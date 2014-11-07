@@ -105,10 +105,10 @@ namespace jurbano.Allcea.Evaluation
             foreach (var dEstimates in qdEstimates) {
                 string query = dEstimates.Key;
                 foreach (var estimate in dEstimates.Value) {
+                    estimate.Value.Weight = 0;
                     string doc = estimate.Key;
                     // Iterate all sys-sys
                     var ranks = qdsRanks[query][doc];
-                    estimate.Value.Weight = 0;
                     foreach (var sqRels in ssqRels) {
                         string sysA = sqRels.Key;
                         foreach (var qRels in sqRels.Value) {
@@ -117,6 +117,25 @@ namespace jurbano.Allcea.Evaluation
                                 estimate.Value.Weight += 1;
                             }
                         }
+                    }
+                }
+            }
+        }
+        public void ComputeQueryDocumentWeights(
+                  Dictionary<string, Dictionary<string, RelevanceEstimate>> qdEstimates,
+                  Dictionary<string, Dictionary<string, Dictionary<string, int>>> qdsRanks,
+                  Dictionary<string, Dictionary<string, AbsoluteEffectivenessEstimate>> sqAbss)
+        {
+            // Iterate query-docs
+            foreach (var dEstimates in qdEstimates) {
+                string query = dEstimates.Key;
+                foreach (var estimate in dEstimates.Value) {
+                    estimate.Value.Weight = 0;
+                    string doc = estimate.Key;
+                    // Iterate all sys-sys
+                    var ranks = qdsRanks[query][doc];
+                    foreach (var rank in ranks) {
+                        estimate.Value.Weight += sqAbss[rank.Key][query].Variance;
                     }
                 }
             }
