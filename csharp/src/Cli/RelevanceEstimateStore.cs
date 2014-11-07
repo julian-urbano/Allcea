@@ -27,27 +27,10 @@ namespace jurbano.Allcea.Cli
     {
         protected Dictionary<string, Dictionary<string, RelevanceEstimate>> _estimates;
 
-        public RelevanceEstimateStore(IEnumerable<RelevanceEstimate> judged, IEnumerable<RelevanceEstimate> estimated)
+        public RelevanceEstimateStore(IEnumerable<RelevanceEstimate> estimates)
         {
-            // Re-structure estimated judgments
             this._estimates = new Dictionary<string, Dictionary<string, RelevanceEstimate>>();
-            foreach (var e in estimated) {
-                Dictionary<string, RelevanceEstimate> q = null;
-                if (!this._estimates.TryGetValue(e.Query, out q)) {
-                    q = new Dictionary<string, RelevanceEstimate>();
-                    this._estimates.Add(e.Query, q);
-                }
-                q.Add(e.Document, e);
-            }
-            // Override known judgments
-            foreach (var j in judged) {
-                Dictionary<string, RelevanceEstimate> q = null;
-                if (!this._estimates.TryGetValue(j.Query, out q)) {
-                    q = new Dictionary<string, RelevanceEstimate>();
-                    this._estimates.Add(j.Query, q);
-                }
-                q[j.Document] = j;
-            }
+            this.Update(estimates);
         }
 
         public RelevanceEstimate Estimate(string query, string doc)
@@ -60,6 +43,21 @@ namespace jurbano.Allcea.Cli
                 }
             }
             throw new ArgumentException("No estimate available for document '"+doc+"' to query '"+query+"'.");
+        }
+        public void Update(RelevanceEstimate estimate)
+        {
+            Dictionary<string, RelevanceEstimate> q = null;
+            if (!this._estimates.TryGetValue(estimate.Query, out q)) {
+                q = new Dictionary<string, RelevanceEstimate>();
+                this._estimates.Add(estimate.Query, q);
+            }
+            q[estimate.Document] = estimate;
+        }
+        public void Update(IEnumerable<RelevanceEstimate> estimates)
+        {
+            foreach (var estimate in estimates) {
+                this.Update(estimate);
+            }
         }
     }
 }

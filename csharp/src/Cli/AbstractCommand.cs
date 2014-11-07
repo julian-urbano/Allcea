@@ -178,6 +178,26 @@ namespace jurbano.Allcea.Cli
             }
             return querydocs;
         }
+        internal static Dictionary<string, Dictionary<string, Dictionary<string, int>>> ToQueryDocumentSystemRanks(IEnumerable<Run> runs)
+        {
+            Dictionary<string, Dictionary<string, Dictionary<string, int>>> qdsRanks = new Dictionary<string, Dictionary<string, Dictionary<string, int>>>();
+            foreach (var run in runs) {
+                Dictionary<string, Dictionary<string, int>> dsRanks = null;
+                if (!qdsRanks.TryGetValue(run.Query, out dsRanks)) {
+                    dsRanks = new Dictionary<string, Dictionary<string, int>>();
+                    qdsRanks.Add(run.Query, dsRanks);
+                }
+                for (int i = 0; i <run.Documents.Length;i++){
+                    Dictionary<string, int> sRanks = null;
+                    if (!dsRanks.TryGetValue(run.Documents[i], out sRanks)) {
+                        sRanks = new Dictionary<string, int>();
+                        dsRanks.Add(run.Documents[i], sRanks);
+                    }
+                    sRanks.Add(run.System, i + 1);
+                }
+            }
+            return qdsRanks;
+        }
         internal static Dictionary<string, Dictionary<string, Run>> ToSystemQueryRuns(IEnumerable<Run> runs)
         {
             Dictionary<string, Dictionary<string, Run>> sqRuns = new Dictionary<string, Dictionary<string, Run>>(); // [sys [query run]]

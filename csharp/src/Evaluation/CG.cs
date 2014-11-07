@@ -95,5 +95,31 @@ namespace jurbano.Allcea.Evaluation
                 e, var,
                 confEstimator.EstimateInterval(est), confEstimator.EstimateAbsoluteConfidence(est));
         }
+
+        public void ComputeQueryDocumentWeights(
+            Dictionary<string, Dictionary<string, RelevanceEstimate>> qdEstimates,
+            Dictionary<string, Dictionary<string, Dictionary<string, int>>> qdsRanks,
+            Dictionary<string, Dictionary<string, Dictionary<string, RelativeEffectivenessEstimate>>> ssqRels)
+        {
+            // Iterate query-docs
+            foreach (var dEstimates in qdEstimates) {
+                string query = dEstimates.Key;
+                foreach (var estimate in dEstimates.Value) {
+                    string doc = estimate.Key;
+                    // Iterate all sys-sys
+                    var ranks = qdsRanks[query][doc];
+                    estimate.Value.Weight = 0;
+                    foreach (var sqRels in ssqRels) {
+                        string sysA = sqRels.Key;
+                        foreach (var qRels in sqRels.Value) {
+                            string sysB = qRels.Key;
+                            if (ranks.ContainsKey(sysA) != ranks.ContainsKey(sysB)) {
+                                estimate.Value.Weight += 1;
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
 }

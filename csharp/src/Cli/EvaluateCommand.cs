@@ -94,7 +94,8 @@ namespace jurbano.Allcea.Cli
             }
             IEnumerable<RelevanceEstimate> estimates = AbstractCommand.ReadEstimatedJudgments(this._estimatedPath);
             // Instantiate estimate store and measure
-            RelevanceEstimateStore store = new RelevanceEstimateStore(judged, estimates);
+            RelevanceEstimateStore store = new RelevanceEstimateStore(estimates);
+            store.Update(judged);
             IMeasure measure = new CG(100); //TODO: max relevance
 
             // Re-structure runs for efficient access

@@ -27,5 +27,10 @@ namespace jurbano.Allcea.Evaluation
     {
         RelativeEffectivenessEstimate Estimate(Run runA, Run runB, IRelevanceEstimator relEstimator, IConfidenceEstimator confEstimator);
         AbsoluteEffectivenessEstimate Estimate(Run run, IRelevanceEstimator relEstimator, IConfidenceEstimator confEstimator);
+
+        void ComputeQueryDocumentWeights(
+            Dictionary<string, Dictionary<string, RelevanceEstimate>> qdEstimates,
+            Dictionary<string, Dictionary<string, Dictionary<string, int>>> qdsRanks,
+            Dictionary<string, Dictionary<string, Dictionary<string, RelativeEffectivenessEstimate>>> ssqRels);
     }
 }

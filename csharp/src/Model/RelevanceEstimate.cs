@@ -15,17 +15,19 @@
 
 namespace jurbano.Allcea.Model
 {
-    [global::System.Diagnostics.DebuggerDisplay("Query:{Query}, Doc:{Document}, E={Expectation}, Var={Variance}")]
+    [global::System.Diagnostics.DebuggerDisplay("Query:{Query}, Doc:{Document}, E={Expectation}, Var={Variance}, Weight={Weight}")]
     public class RelevanceEstimate : Estimate
     {
         public string Query { get; protected set; }
         public string Document { get; protected set; }
+        public double Weight { get; set; }
 
         public RelevanceEstimate(string query, string doc, double e, double var)
             : base(e, var)
         {
             this.Query = query;
             this.Document = doc;
+            this.Weight = 0;
         }
     }
 }
