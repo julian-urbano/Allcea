@@ -20,5 +20,6 @@ namespace jurbano.Allcea.Estimation
     public interface IRelevanceEstimator
     {
         RelevanceEstimate Estimate(string query, string doc);
+        void Update(RelevanceEstimate est);
     }
 }

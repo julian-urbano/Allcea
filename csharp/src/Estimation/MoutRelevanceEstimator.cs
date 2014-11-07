@@ -155,5 +155,11 @@ namespace jurbano.Allcea.Estimation
             // If here, some feature was missing, so return default estimate
             return this._defaultEstimator.Estimate(query, doc);
         }
+
+        public void Update(RelevanceEstimate est)
+        {
+            // Nothing to do
+            this._defaultEstimator.Update(est);
+        }
     }
 }

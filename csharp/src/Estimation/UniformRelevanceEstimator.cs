@@ -35,5 +35,10 @@ namespace jurbano.Allcea.Estimation
         {
             return new RelevanceEstimate(query, doc, this.MaxRelevance / 2.0, (Math.Pow(this.MaxRelevance + 1, 2) - 1.0) / 12.0);
         }
+
+        public void Update(RelevanceEstimate est)
+        {
+            // Nothing to do
+        }
     }
 }

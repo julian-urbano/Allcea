@@ -98,5 +98,18 @@ namespace jurbano.Allcea.Cli
             // if not, estimate
             return this._estimator.Estimate(query, doc);
         }
+
+        public void Update(RelevanceEstimate estimate)
+        {
+            // Add to list of judged
+            Dictionary<string, RelevanceEstimate> q = null;
+            if (!this._judged.TryGetValue(estimate.Query, out q)) {
+                q = new Dictionary<string, RelevanceEstimate>();
+                this._judged.Add(estimate.Query, q);
+            }
+            q.Add(estimate.Document, estimate);
+            // and update wrapped estimator as well
+            this._estimator.Update(estimate);
+        }
     }
 }
