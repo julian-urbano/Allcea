@@ -29,5 +29,18 @@ namespace jurbano.Allcea.Model
             this.Document = doc;
             this.Weight = 0;
         }
+
+        public static string GetId(string query, string doc)
+        {
+            return query + "\t" + doc;
+        }
+        public static string GetQuery(string id)
+        {
+            return id.Split('\t')[0];
+        }
+        public static string GetDocument(string id)
+        {
+            return id.Split('\t')[1];
+        }
     }
 }

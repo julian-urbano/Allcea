@@ -25,33 +25,27 @@ namespace jurbano.Allcea.Cli
 {
     public class RelevanceEstimateStore : IRelevanceEstimator
     {
-        protected Dictionary<string, Dictionary<string, RelevanceEstimate>> _estimates;
+        protected Dictionary<string, RelevanceEstimate> _estimates; // [querydoc, estimate]
 
         public RelevanceEstimateStore(IEnumerable<RelevanceEstimate> estimates)
         {
-            this._estimates = new Dictionary<string, Dictionary<string, RelevanceEstimate>>();
+            this._estimates = new Dictionary<string, RelevanceEstimate>();
             this.Update(estimates);
         }
 
         public RelevanceEstimate Estimate(string query, string doc)
         {
-            Dictionary<string, RelevanceEstimate> q = null;
-            if (this._estimates.TryGetValue(query, out q)) {
-                RelevanceEstimate e = null;
-                if (q.TryGetValue(doc, out e)) {
-                    return e;
-                }
+            string id = RelevanceEstimate.GetId(query, doc);
+            RelevanceEstimate e = null;
+            if (this._estimates.TryGetValue(id, out e)) {
+                return e;
             }
-            throw new ArgumentException("No estimate available for document '"+doc+"' to query '"+query+"'.");
+            throw new ArgumentException("No estimate available for document '" + doc + "' to query '" + query + "'.");
         }
         public void Update(RelevanceEstimate estimate)
         {
-            Dictionary<string, RelevanceEstimate> q = null;
-            if (!this._estimates.TryGetValue(estimate.Query, out q)) {
-                q = new Dictionary<string, RelevanceEstimate>();
-                this._estimates.Add(estimate.Query, q);
-            }
-            q[estimate.Document] = estimate;
+            string id = RelevanceEstimate.GetId(estimate.Query, estimate.Document);
+            this._estimates[id] = estimate;
         }
         public void Update(IEnumerable<RelevanceEstimate> estimates)
         {

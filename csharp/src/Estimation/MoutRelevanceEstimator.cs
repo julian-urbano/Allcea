@@ -24,11 +24,11 @@ namespace jurbano.Allcea.Estimation
 {
     public class MoutRelevanceEstimator : IRelevanceEstimator
     {
-        protected Dictionary<string, Dictionary<string, double>> _fSYS; // [query, [doc, fSYS]]
+        protected Dictionary<string, double> _fSYS; // [querydoc, fSYS]
         protected double _OV;
-        protected Dictionary<string, Dictionary<string, bool>> _sGEN; // [query, [doc, sGEN]]
-        protected Dictionary<string, Dictionary<string, double>> _fGEN; // [query, [doc, fGEN]]
-        protected Dictionary<string, Dictionary<string, double>> _fART; // [query, [doc, fART]]
+        protected Dictionary<string, bool> _sGEN; // [querydoc, sGEN]
+        protected Dictionary<string, double> _fGEN; // [querydoc, fGEN]
+        protected Dictionary<string,  double> _fART; // [querydoc, fART]
 
         protected OrdinalLogisticRegression _model;
         protected static readonly double[] LABELS = new double[] { 5, 15, 25, 35, 45, 55, 65, 75, 85, 95 };
@@ -49,48 +49,48 @@ namespace jurbano.Allcea.Estimation
                 artists[m.Document] = m.Artist;
                 genres[m.Document] = m.Genre;
             }
+            // Auxiliary structure for easier computation of fGEN and fART
+            Dictionary<string, HashSet<string>> qDocs = new Dictionary<string, HashSet<string>>();
             // fSYS and OV
-            this._fSYS = new Dictionary<string, Dictionary<string, double>>();
+            this._fSYS = new Dictionary<string, double>();
             foreach (var run in runs) {
-                Dictionary<string, double> qfSYS = null;
-                if (!this._fSYS.TryGetValue(run.Query, out qfSYS)) {
-                    qfSYS = new Dictionary<string, double>();
-                    this._fSYS.Add(run.Query, qfSYS);
+                string query = run.Query;
+                HashSet<string> docs = null;
+                if (!qDocs.TryGetValue(query, out docs)) {
+                    docs = new HashSet<string>();
+                    qDocs.Add(query, docs);
                 }
-                foreach (var doc in run.Documents) {
-                    double qdfSYS = 0;
-                    qfSYS.TryGetValue(doc, out qdfSYS);
-                    qfSYS[doc] = qdfSYS + 1.0 / nSys;
+                foreach (string doc in run.Documents) {
+                    string id = RelevanceEstimate.GetId(query, doc);
+                    // fSYS
+                    double fSYS = 0;
+                    this._fSYS.TryGetValue(id, out fSYS);
+                    this._fSYS[id] = fSYS + 1.0 / nSys;
+                    docs.Add(doc);
                 }
             }
             // OV
-            this._OV = ((double)this._fSYS.Sum(q => q.Value.Count)) / (nSys * this._fSYS.Count * runs.First().Documents.Count());
-            // sGEN, fGEN and fART, replicate query-doc structure from fSYS
-            this._sGEN = new Dictionary<string, Dictionary<string, bool>>();
-            this._fGEN = new Dictionary<string, Dictionary<string, double>>();
-            this._fART = new Dictionary<string, Dictionary<string, double>>();
-            foreach (var qfSYS in this._fSYS) {
-                string query = qfSYS.Key;
-                Dictionary<string, bool> qsGEN = new Dictionary<string, bool>();
-                Dictionary<string, double> qfGEN = new Dictionary<string, double>();
-                Dictionary<string, double> qfART = new Dictionary<string, double>();
-                foreach (var qdfSYS in qfSYS.Value) {
-                    string doc = qdfSYS.Key;
+            this._OV = ((double)this._fSYS.Count) / (nSys * qDocs.Count * runs.First().Documents.Count());
+            // sGEN, fGEN and fART, traverse qDocs
+            this._sGEN = new Dictionary<string, bool>();
+            this._fGEN = new Dictionary<string, double>();
+            this._fART = new Dictionary<string, double>();
+            foreach (var docs in qDocs) {
+                string query = docs.Key;
+                foreach (string doc in docs.Value) {
+                    string id = RelevanceEstimate.GetId(query, doc);
                     // sGEN and fGEN
                     if (genres.ContainsKey(doc)) {
                         string docGEN = genres[doc];
                         // sGEN
                         if (genres.ContainsKey(query)) {
-                            qsGEN.Add(qdfSYS.Key, docGEN == genres[qfSYS.Key]);
-                        } else {
-                            //qsGEN.Add(doc, null);
+                            this._sGEN[id] = docGEN == genres[query];
                         }
                         // fGEN
                         double docfGEN = 0;
                         int docfGENnotnull = 0;
                         // traverse all documents individually
-                        foreach (var qdfSYS2 in qfSYS.Value) {
-                            string doc2 = qdfSYS2.Key;
+                        foreach (string doc2 in docs.Value) {
                             if (genres.ContainsKey(doc2)) {
                                 string doc2GEN = genres[doc2];
                                 if (docGEN == doc2GEN) {
@@ -99,10 +99,7 @@ namespace jurbano.Allcea.Estimation
                                 docfGENnotnull++;
                             }
                         }
-                        qfGEN.Add(doc, docfGEN / docfGENnotnull);
-                    } else {
-                        //qsGEN.Add(doc, null);
-                        //qfGEN.Add(doc, null);
+                        this._fGEN[id] = docfGEN / docfGENnotnull;
                     }
                     // fART
                     if (artists.ContainsKey(doc)) {
@@ -110,8 +107,7 @@ namespace jurbano.Allcea.Estimation
                         double docfART = 0;
                         int docfARTnotnull = 0;
                         // traverse all documents individually
-                        foreach (var qdfSYS2 in qfSYS.Value) {
-                            string doc2 = qdfSYS2.Key;
+                        foreach (string doc2 in docs.Value) {
                             if (artists.ContainsKey(doc2)) {
                                 string doc2ART = artists[doc2];
                                 if (docART == doc2ART) {
@@ -120,38 +116,27 @@ namespace jurbano.Allcea.Estimation
                                 docfARTnotnull++;
                             }
                         }
-                        qfART.Add(doc, docfART / docfARTnotnull);
-                    } else {
-                        //qfART.Add(doc, null);
+                        this._fART[id] = docfART / docfARTnotnull;
                     }
                 }
-                this._sGEN.Add(query, qsGEN);
-                this._fGEN.Add(query, qfGEN);
-                this._fART.Add(query, qfART);
             }
         }
 
         public RelevanceEstimate Estimate(string query, string doc)
         {
-            Dictionary<string, double> qfSYS = null;
-            Dictionary<string, bool> qsGEN = null;
-            Dictionary<string, double> qfGEN = null;
-            Dictionary<string, double> qfART = null;
-            // Do we have features for the query?
-            if (this._fSYS.TryGetValue(query, out qfSYS) && this._sGEN.TryGetValue(query, out qsGEN) &&
-                this._fGEN.TryGetValue(query, out qfGEN) && this._fART.TryGetValue(query, out qfART)) {
-                double fSYS = 0;
-                bool sGEN = false;
-                double fGEN = 0;
-                double fART = 0;
-                // Do we have features for the document?
-                if (qfSYS.TryGetValue(doc, out fSYS) && qsGEN.TryGetValue(doc, out sGEN) &&
-                    qfGEN.TryGetValue(doc, out fGEN) && qfART.TryGetValue(doc, out fART)) {
-                    double[] thetas = new double[] { fSYS, this._OV, fSYS * this._OV, fART, sGEN ? 1 : 0, fGEN, sGEN ? fGEN : 0 };
-                    double[] eval = this._model.Evaluate(thetas);
-                    return new RelevanceEstimate(query, doc, eval[0], eval[1]);
-                }
+            string id = RelevanceEstimate.GetId(query, doc);
+            double fSYS = 0;
+            bool sGEN = false;
+            double fGEN = 0;
+            double fART = 0;
+            // Do we have features for the query and document?
+            if (this._fSYS.TryGetValue(id, out fSYS) && this._sGEN.TryGetValue(id, out sGEN) &&
+                this._fGEN.TryGetValue(id, out fGEN) && this._fART.TryGetValue(id, out fART)) {
+                double[] thetas = new double[] { fSYS, this._OV, fSYS * this._OV, fART, sGEN ? 1 : 0, fGEN, sGEN ? fGEN : 0 };
+                double[] eval = this._model.Evaluate(thetas);
+                return new RelevanceEstimate(query, doc, eval[0], eval[1]);
             }
+
             // If here, some feature was missing, so return default estimate
             return this._defaultEstimator.Estimate(query, doc);
         }
