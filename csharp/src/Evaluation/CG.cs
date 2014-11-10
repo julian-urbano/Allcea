@@ -101,30 +101,28 @@ namespace jurbano.Allcea.Evaluation
             Dictionary<string, Dictionary<string, Dictionary<string, int>>> qdsRanks,
             Dictionary<string, Dictionary<string, Dictionary<string, RelativeEffectivenessEstimate>>> ssqRels)
         {
+            int nSys = ssqRels.Count + 1;
             // Iterate query-docs
             foreach (var dEstimates in qdEstimates) {
                 string query = dEstimates.Key;
                 foreach (var estimate in dEstimates.Value) {
                     estimate.Value.Weight = 0;
                     string doc = estimate.Key;
-                    // Iterate all sys-sys
-                    var ranks = qdsRanks[query][doc];
-                    foreach (var sqRels in ssqRels) {
-                        string sysA = sqRels.Key;
-                        foreach (var qRels in sqRels.Value) {
-                            string sysB = qRels.Key;
-                            if (ranks.ContainsKey(sysA) != ranks.ContainsKey(sysB)) {
-                                estimate.Value.Weight += 1;
-                            }
-                        }
-                    }
+                    // n(n-1)/2 system pairs may contain it, assume they all do and subtract
+                    estimate.Value.Weight = nSys * (nSys - 1) / 2;
+                    // c systems contain it, so c(c-1)/2 pairs contribute weight 0
+                    int count = qdsRanks[query][doc].Count;
+                    estimate.Value.Weight -= (count * (count - 1) / 2);
+                    // c systems don't contain it, so c(c-1)/2 pairs contribute weight 0 
+                    count = nSys - count;
+                    estimate.Value.Weight -= (count * (count - 1) / 2);
                 }
             }
         }
         public void ComputeQueryDocumentWeights(
-                  Dictionary<string, Dictionary<string, RelevanceEstimate>> qdEstimates,
-                  Dictionary<string, Dictionary<string, Dictionary<string, int>>> qdsRanks,
-                  Dictionary<string, Dictionary<string, AbsoluteEffectivenessEstimate>> sqAbss)
+            Dictionary<string, Dictionary<string, RelevanceEstimate>> qdEstimates,
+            Dictionary<string, Dictionary<string, Dictionary<string, int>>> qdsRanks,
+            Dictionary<string, Dictionary<string, AbsoluteEffectivenessEstimate>> sqAbss)
         {
             // Iterate query-docs
             foreach (var dEstimates in qdEstimates) {
