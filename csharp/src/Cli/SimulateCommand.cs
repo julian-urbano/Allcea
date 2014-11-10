@@ -34,10 +34,10 @@ namespace jurbano.Allcea.Cli
                 return "The available estimators and their parameters are:"
                     + "\n  uniform  uniform distribution with the Fine scale, from 0 to 100."
                     + "\n  mout     model fitted with features about system outputs and metadata."
-                    + "\n             -p meta=file    path to file with artist-genre metadata for all documents.";
-                //+ "\n  mjud     model fitted with features about system outputs, metadata and known judgments."
-                //+ "\n             -p meta=file    path to file with artist-genre metadata for all documents."
-                //+ "\n             -p judged=file  path to file with judgments already known.";
+                    + "\n             -p meta=file    path to file with artist-genre metadata for all documents."
+                    + "\n  mjud     model fitted with features about system outputs, metadata and known judgments."
+                    + "\n             -p meta=file    path to file with artist-genre metadata for all documents."
+                    + "\n             -p judged=file  optional path to file with judgments already known.";
             }
         }
 
@@ -59,6 +59,7 @@ namespace jurbano.Allcea.Cli
             base.Options.AddOption(OptionBuilder.Factory.IsRequired().HasArg().WithArgName("name").WithDescription("name of the estimator to use.").Create("e"));
             base.Options.AddOption(OptionBuilder.Factory.HasArgs().WithArgName("name=value").WithDescription("optional parameter to the estimator.").Create("p"));
             base.Options.AddOption(OptionBuilder.Factory.IsRequired().HasArg().WithArgName("target").WithDescription("type of estimates to target ('rel' or 'abs').").Create('t'));
+            base.Options.AddOption(OptionBuilder.Factory.IsRequired().HasArg().WithArgName("num").WithDescription("number of batches that will be judged.").Create('b'));
             base.Options.AddOption(OptionBuilder.Factory.IsRequired().HasArg().WithArgName("num").WithDescription("number of documents to judge per batch.").Create('n'));
             base.Options.AddOption(OptionBuilder.Factory.HasArg().WithArgName("conf").WithDescription("optional target average confidence on the estimates (defaults to " + Allcea.DEFAULT_CONFIDENCE + ").").Create("c"));
             base.Options.AddOption(OptionBuilder.Factory.HasArg().WithArgName("size").WithDescription("optional target effect size to compute confidence (defaults to " + Allcea.DEFAULT_RELATIVE_SIZE + " for relative and " + Allcea.DEFAULT_ABSOLUTE_SIZE + " for absolute).").Create("s"));
@@ -69,7 +70,7 @@ namespace jurbano.Allcea.Cli
             this._judgedPath = null;
             this._estimator = null;
             this._decimalDigits = Allcea.DEFAULT_DECIMAL_DIGITS;
-            this._batchNum = 1;
+            this._batchNum = Allcea.DEFAULT_NUMBER_OF_BATCHES;
             this._batchSize = Allcea.DEFAULT_BATCH_SIZE;
             this._confEstimator = null;
             this._target = EvaluationTargets.Relative;
@@ -97,6 +98,7 @@ namespace jurbano.Allcea.Cli
                 this._decimalDigits = AbstractCommand.CheckDigits(cmd.GetOptionValue('d'));
             }
             // Batches
+            this._batchNum = AbstractCommand.CheckBatchNumber(cmd.GetOptionValue('b'));
             this._batchSize = AbstractCommand.CheckBatchSize(cmd.GetOptionValue('n'));
             // Files
             this._inputPath = AbstractCommand.CheckInputFile(cmd.GetOptionValue('i'));
@@ -131,7 +133,7 @@ namespace jurbano.Allcea.Cli
                 qdEstimates.Add(query, dEstimates);
             }
 
-
+            
             bool needsNext = true;
             double confidence = 0.5;
             int iteration = 1, judged = 0;

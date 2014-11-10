@@ -35,10 +35,10 @@ namespace jurbano.Allcea.Cli
                 return "The available estimators and their parameters are:"
                     + "\n  uniform  uniform distribution with the Fine scale, from 0 to 100."
                     + "\n  mout     model fitted with features about system outputs and metadata."
-                    + "\n             -p meta=file    path to file with artist-genre metadata for all documents.";
-                    //+ "\n  mjud     model fitted with features about system outputs, metadata and known judgments."
-                    //+ "\n             -p meta=file    path to file with artist-genre metadata for all documents."
-                    //+ "\n             -p judged=file  path to file with judgments already known.";
+                    + "\n             -p meta=file    path to file with artist-genre metadata for all documents."
+                    + "\n  mjud     model fitted with features about system outputs, metadata and known judgments."
+                    + "\n             -p meta=file    path to file with artist-genre metadata for all documents."
+                    + "\n             -p judged=file  optional path to file with judgments already known.";
             }
         }
 

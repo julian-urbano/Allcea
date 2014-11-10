@@ -32,7 +32,7 @@ namespace jurbano.Allcea.Cli
         protected IRelevanceEstimator _estimator;
         protected string _name;
 
-        protected string _metadataPath;
+        protected Dictionary<string, string> _parameters;
 
         public EstimatorWrapper(string name, Dictionary<string, string> parameters)
         {
@@ -40,6 +40,7 @@ namespace jurbano.Allcea.Cli
 
             this._name = name;
             this._estimator = null;
+            this._parameters = parameters;
             switch (this._name) {
                 case "uniform":
                     if (parameters.Count != 0) {
@@ -50,18 +51,25 @@ namespace jurbano.Allcea.Cli
                     if (parameters.Count != 1 || !parameters.ContainsKey("meta")) {
                         throw new ParseException("Invalid parameters for estimator 'mout'.");
                     }
-                    this._metadataPath = parameters["meta"];
-                    if (!File.Exists(this._metadataPath)) {
-                        throw new ArgumentException("Metadata file '" + this._metadataPath + "' does not exist.");
+                    string metadataPath = parameters["meta"];
+                    if (!File.Exists(metadataPath)) {
+                        throw new ArgumentException("Metadata file '" + metadataPath + "' does not exist.");
                     }
                     break;
                 case "mjud":
-                    if (parameters.Count != 1 || !parameters.ContainsKey("meta")) {
+                    if (!((parameters.Count == 1 && parameters.ContainsKey("meta")) ||
+                          (parameters.Count == 2 && parameters.ContainsKey("meta") && parameters.ContainsKey("judged")))) {
                         throw new ParseException("Invalid parameters for estimator 'mjud'.");
                     }
-                    this._metadataPath = parameters["meta"];
-                    if (!File.Exists(this._metadataPath)) {
-                        throw new ArgumentException("Metadata file '" + this._metadataPath + "' does not exist.");
+                    metadataPath = parameters["meta"];
+                    if (!File.Exists(metadataPath)) {
+                        throw new ArgumentException("Metadata file '" + metadataPath + "' does not exist.");
+                    }
+                    if (parameters.Count == 2) {
+                        string judgedPath = parameters["judged"];
+                        if (!File.Exists(judgedPath)) {
+                            throw new ArgumentException("Known judgments file '" + judgedPath + "' does not exist.");
+                        }
                     }
                     break;
                 default:
@@ -84,13 +92,16 @@ namespace jurbano.Allcea.Cli
                     break;
                 case "mout":
                     // read metadata
-                    IEnumerable<Metadata> metadata = AbstractCommand.ReadMetadata(this._metadataPath);
+                    IEnumerable<Metadata> metadata = AbstractCommand.ReadMetadata(this._parameters["meta"]);
                     this._estimator = new MoutRelevanceEstimator(runs, metadata);
                     break;
                 case "mjud":
                     // read metadata
-                    metadata = AbstractCommand.ReadMetadata(this._metadataPath);
-                    this._estimator = new MjudRelevanceEstimator(runs, metadata, judged);
+                    metadata = AbstractCommand.ReadMetadata(this._parameters["meta"]);
+                    IEnumerable<RelevanceEstimate> judgedEst = this._parameters.ContainsKey("judged") ?
+                        AbstractCommand.ReadKnownJudgments(this._parameters["judged"]) :
+                        new RelevanceEstimate[] { };
+                    this._estimator = new MjudRelevanceEstimator(runs, metadata, judgedEst);
                     break;
             }
         }

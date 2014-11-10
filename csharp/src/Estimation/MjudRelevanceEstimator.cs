@@ -25,9 +25,16 @@ namespace jurbano.Allcea.Estimation
 {
     public class MjudRelevanceEstimator : IRelevanceEstimator
     {
-        protected Dictionary<string, Dictionary<string, double>> _fSYS; // [query, [doc, fSYS]]
-        protected Dictionary<string, Dictionary<string, double>> _aSYS; // [query, [sys, aSYS]]
-        protected Dictionary<string, Dictionary<string, double>> _aART; // [query, [artist, aART]]
+        protected Dictionary<string, double> _fSYS; // [querydoc, fSYS]
+        protected Dictionary<string, double> _aSYS; // [querydoc, aSYS]
+        protected Dictionary<string, double> _aART; // [querydoc, aART]
+
+        protected Dictionary<string, List<double>> _sRels; // [sys, [rel]]
+        protected Dictionary<string, List<double>> _qaRels; // [queryartist, [rel]]
+        protected bool _needsUpdate;
+
+        protected Dictionary<string, string> _dArtists; // [doc, artist]
+        protected Dictionary<string, Dictionary<string, Dictionary<string, int>>> _qdsRanks;
 
         protected OrdinalLogisticRegression _model;
         protected static readonly double[] LABELS = new double[] { 5, 15, 25, 35, 45, 55, 65, 75, 85, 95 };
@@ -43,49 +50,62 @@ namespace jurbano.Allcea.Estimation
 
             // Number of systems and metadata
             int nSys = runs.Select(r => r.System).Distinct().Count();
-            Dictionary<string, string> artists = new Dictionary<string, string>(); // [doc, artist]
+            this._dArtists = new Dictionary<string, string>();
             foreach (var m in metadata) {
-                artists[m.Document] = m.Artist;
+                this._dArtists[m.Document] = m.Artist;
             }
             // fSYS
-            this._fSYS = new Dictionary<string, Dictionary<string, double>>();
+            this._fSYS = new Dictionary<string, double>();
+            this._aSYS = new Dictionary<string, double>();
+            this._aART = new Dictionary<string, double>();
+            this._sRels = new Dictionary<string, List<double>>();
+            this._qaRels = new Dictionary<string, List<double>>();
             foreach (var run in runs) {
-                Dictionary<string, double> qfSYS = null;
-                if (!this._fSYS.TryGetValue(run.Query, out qfSYS)) {
-                    qfSYS = new Dictionary<string, double>();
-                    this._fSYS.Add(run.Query, qfSYS);
-                }
-                foreach (var doc in run.Documents) {
-                    double qdfSYS = 0;
-                    qfSYS.TryGetValue(doc, out qdfSYS);
-                    qfSYS[doc] = qdfSYS + 1.0 / nSys;
+                string query = run.Query;
+                foreach (string doc in run.Documents) {
+                    string id = RelevanceEstimate.GetId(query, doc);
+                    // fSYS
+                    double fSYS = 0;
+                    this._fSYS.TryGetValue(id, out fSYS);
+                    this._fSYS[id] = fSYS + 1.0 / nSys;
+
+                    this._aSYS[id] = 0;
+                    this._aART[id] = 0;
+                    // sRels
+                    if (!this._sRels.ContainsKey(run.System)) {
+                        this._sRels[run.System] = new List<double>();
+                    }
+                    // qaRels
+                    string artist = null;
+                    if (this._dArtists.TryGetValue(doc, out artist) && !this._qaRels.ContainsKey(query + "\t" + artist)) {
+                        this._qaRels[query + "\t" + artist] = new List<double>();
+                    }
                 }
             }
 
-            // TODO
+            this._qdsRanks = jurbano.Allcea.Cli.AbstractCommand.ToQueryDocumentSystemRanks(runs);
 
             // Incorporate known judgments
             foreach (var est in judged) {
                 this.Update(est);
             }
+            this._needsUpdate = true;
         }
 
         public RelevanceEstimate Estimate(string query, string doc)
         {
-            Dictionary<string, double> qfSYS = null;
-            Dictionary<string, double> qaSYS = null;
-            Dictionary<string, double> qaART = null;
-            // Do we have features for the query?
-            if (this._fSYS.TryGetValue(query, out qfSYS) && this._aSYS.TryGetValue(query, out qaSYS) &&this._aART.TryGetValue(query, out qaART) ) {
-                double fSYS = 0;
-                double aSYS = 0;
-                double aART = 0;
-                // Do we have features for the document?
-                if (qfSYS.TryGetValue(doc, out fSYS) && qaSYS.TryGetValue(doc, out aSYS) && qaART.TryGetValue(doc, out aART)) {
-                    double[] thetas = new double[] { fSYS, aSYS, aART };
-                    double[] eval = this._model.Evaluate(thetas);
-                    return new RelevanceEstimate(query, doc, eval[0], eval[1]);
-                }
+            if (this._needsUpdate) {
+                this.DoUpdate();
+            }
+            string id = RelevanceEstimate.GetId(query, doc);
+            double fSYS = 0;
+            double aSYS = 0;
+            double aART = 0;
+            // Do we have features?
+            if (this._fSYS.TryGetValue(id, out fSYS) && this._aSYS.TryGetValue(id, out aSYS) && this._aART.TryGetValue(id, out aART)) {
+                double[] thetas = new double[] { fSYS, aSYS, aART };
+                double[] eval = this._model.Evaluate(thetas);
+                return new RelevanceEstimate(query, doc, eval[0], eval[1]);
             }
             // If here, some feature was missing, so return default estimate
             return this._defaultEstimator.Estimate(query, doc);
@@ -93,9 +113,57 @@ namespace jurbano.Allcea.Estimation
 
         public void Update(RelevanceEstimate est)
         {
-            // TODO
+            // qsRels
+            foreach (var sRanks in this._qdsRanks[est.Query][est.Document]) {
+                this._sRels[sRanks.Key].Add(est.Expectation);
+            }
+            // qaRels
+            string artist = null;
+            if (this._dArtists.TryGetValue(est.Document, out artist)) {
+                this._qaRels[est.Query + "\t" + artist].Add(est.Expectation);
+            }
+
+            this._needsUpdate = true;
 
             this._defaultEstimator.Update(est);
+        }
+        protected void DoUpdate()
+        {
+            foreach (var dsRanks in this._qdsRanks) {
+                string query = dsRanks.Key;
+                foreach (var sRanks in dsRanks.Value) {
+                    string doc = sRanks.Key;
+                    string id = RelevanceEstimate.GetId(query, doc);
+
+                    // aSYS
+                    double aSYS = 0;
+                    bool hasaSYS = false;
+                    foreach (string sys in sRanks.Value.Keys) { // systems that retrieved d for q
+                        var rels = this._sRels[sys];
+                        if (rels.Count != 0){
+                            hasaSYS = true;
+                            aSYS += rels.Average();
+                        }
+                    }
+                    if (hasaSYS) { // If we don't have judgments yet related to q and d, don't estimate
+                        this._aSYS[id] = aSYS / sRanks.Value.Count;
+                    } else {
+                        this._aSYS.Remove(id);
+                    }
+                    // aART
+                    string artist = null;
+                    if (this._dArtists.TryGetValue(doc, out artist) && artist != "VARIOUS ARTISTS") {
+                        var rels = this._qaRels[query + "\t" + artist];
+                        if (rels.Count != 0) { // If we don't have judgments yet related to q and d, don't estimate
+                            this._aART[id] = rels.Average();
+                        } else {
+                            this._aART.Remove(id);
+                        }
+                    }
+                }
+            }
+
+            this._needsUpdate = false;
         }
     }
 }
