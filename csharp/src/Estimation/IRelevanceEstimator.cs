@@ -21,5 +21,7 @@ namespace jurbano.Allcea.Estimation
     {
         RelevanceEstimate Estimate(string query, string doc);
         void Update(RelevanceEstimate est);
+
+        double[] Features(string query, string doc);
     }
 }

@@ -66,6 +66,7 @@
     <Compile Include="src\Cli\EstimateCommand.cs" />
     <Compile Include="src\Cli\EstimatorWrapper.cs" />
     <Compile Include="src\Cli\EvaluateCommand.cs" />
+    <Compile Include="src\Cli\FeaturesCommand.cs" />
     <Compile Include="src\Cli\NextCommand.cs" />
     <Compile Include="src\Cli\RelevanceEstimateStore.cs" />
     <Compile Include="src\Cli\SimulateCommand.cs" />

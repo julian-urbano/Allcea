@@ -26,6 +26,7 @@ namespace jurbano.Allcea.Estimation
     public class MjudRelevanceEstimator : IRelevanceEstimator
     {
         protected Dictionary<string, double> _fSYS; // [querydoc, fSYS]
+        protected double _OV;
         protected Dictionary<string, double> _aSYS; // [querydoc, aSYS]
         protected Dictionary<string, double> _aART; // [querydoc, aART]
 
@@ -82,6 +83,8 @@ namespace jurbano.Allcea.Estimation
                     }
                 }
             }
+            // OV
+            this._OV = ((double)this._fSYS.Count) / (nSys * (runs.Count()/nSys) * runs.First().Documents.Count());
 
             this._qdsRanks = jurbano.Allcea.Cli.AbstractCommand.ToQueryDocumentSystemRanks(runs);
 
@@ -159,11 +162,33 @@ namespace jurbano.Allcea.Estimation
                         } else {
                             this._aART.Remove(id);
                         }
+                    } else {
+                        this._aART.Remove(id);
                     }
                 }
             }
 
             this._needsUpdate = false;
+        }
+
+        public double[] Features(string query, string doc)
+        {
+            if (this._needsUpdate) {
+                this.DoUpdate();
+            }
+            string id = RelevanceEstimate.GetId(query, doc);
+
+            double fSYS, aSYS, aART;
+            if (!this._fSYS.TryGetValue(id, out fSYS)) {
+                fSYS = double.NaN;
+            }
+            if (!this._aSYS.TryGetValue(id, out aSYS)) {
+                aSYS = double.NaN;
+            }
+            if (!this._aART.TryGetValue(id, out aART)) {
+                aART = double.NaN;
+            }
+            return new double[] { fSYS, this._OV, aSYS, aART };
         }
     }
 }

@@ -53,5 +53,9 @@ namespace jurbano.Allcea.Cli
                 this.Update(estimate);
             }
         }
+        public double[] Features(string query, string doc)
+        {
+            return new double[] { };
+        }
     }
 }

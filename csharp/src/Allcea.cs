@@ -45,7 +45,7 @@ namespace jurbano.Allcea
         public static void Main(string[] args)
         {
             //DateTime now = DateTime.Now;
-            //args = @"next -e ..\..\..\etc\estimates.txt -i ..\..\..\etc\runs.txt -t abso -b 10 -n 2 -d 2 -c .5".Split(' '); //-j ..\..\..\etc\judgments-sample.txt".Split(' ');
+            args = @"simulate -b 5 -n 1 -t rel -i ..\..\..\etc\$$year$$-runs.txt -j ..\..\..\etc\$$year$$-judgments.txt -e mout -p meta=..\..\..\etc\metadata.txt".Replace("$$year$$",args[0]).Split();
 
             if (args.Length > 0) {
                 // Check CLI command name
@@ -60,6 +60,7 @@ namespace jurbano.Allcea
                     case "evaluate": command = new EvaluateCommand(); break;
                     case "next": command = new NextCommand(); break;
                     case "simulate": command = new SimulateCommand(); break;
+                    case "features": command = new FeaturesCommand(); break;
                     default:
                         Console.Error.WriteLine("'" + commandName + "' is not a valid Allcea command. See '" + Allcea.CLI_NAME_AND_VERSION + " -h'.");
                         Environment.Exit(1);
@@ -126,6 +127,7 @@ namespace jurbano.Allcea
                 + "\n  evaluate  to evaluate systems with estimated judgments."
                 + "\n  next      to obtain the net batch of documents to judge."
                 + "\n  simulate  to simulate the iterative execution of 'estimate', 'evaluate' and 'next'."
+                + "\n  features  to output the features computed by a particular estimator."
             );
         }
         protected static void PrintUsage(string msg, string command, Options options, string footer)

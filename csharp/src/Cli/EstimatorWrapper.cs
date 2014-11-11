@@ -126,5 +126,10 @@ namespace jurbano.Allcea.Cli
             // and update wrapped estimator as well
             this._estimator.Update(estimate);
         }
+        
+        public double[] Features(string query, string doc)
+        {
+            return this._estimator.Features(query, doc);
+        }
     }
 }

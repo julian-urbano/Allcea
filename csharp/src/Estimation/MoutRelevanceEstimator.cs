@@ -28,12 +28,16 @@ namespace jurbano.Allcea.Estimation
         protected double _OV;
         protected Dictionary<string, bool> _sGEN; // [querydoc, sGEN]
         protected Dictionary<string, double> _fGEN; // [querydoc, fGEN]
-        protected Dictionary<string,  double> _fART; // [querydoc, fART]
+        protected Dictionary<string, double> _fART; // [querydoc, fART]
 
         protected OrdinalLogisticRegression _model;
         protected static readonly double[] LABELS = new double[] { 5, 15, 25, 35, 45, 55, 65, 75, 85, 95 };
-        protected static readonly double[] ALPHAS = new double[] { -0.5092, -1.2231, -1.7919, -2.2787, -2.7216, -3.1956, -3.8044, -4.6928, -5.9567 };
-        protected static readonly double[] BETAS = new double[] { -17.4721, 0.1336, 26.455, 2.9111, 2.0443, 5.4544, -3.4851 };
+        protected static readonly double[] ALPHAS = new double[] {
+            -1.315410 ,    -2.049103  ,   -2.609735  ,   -3.085994  ,   -3.524842  ,   -3.990695   ,  -4.577862   ,  -5.447831   ,  -6.708953};
+            //-0.5092, -1.2231, -1.7919, -2.2787, -2.7216, -3.1956, -3.8044, -4.6928, -5.9567 };
+        protected static readonly double[] BETAS = new double[] { 
+            -6.344153, 1.321577, 11.686008, 3.129546,1.887742,5.009749,-3.072573};
+            //-17.4721, 0.1336, 26.455, 2.9111, 2.0443, 5.4544, -3.4851 };
         protected IRelevanceEstimator _defaultEstimator;
 
         public MoutRelevanceEstimator(IEnumerable<Run> runs, IEnumerable<Metadata> metadata)
@@ -145,6 +149,30 @@ namespace jurbano.Allcea.Estimation
         {
             // Nothing to do
             this._defaultEstimator.Update(est);
+        }
+        
+        public double[] Features(string query, string doc)
+        {
+            string id = RelevanceEstimate.GetId(query, doc);
+
+            double fSYS, sGEN, fGEN, fART;
+            if (!this._fSYS.TryGetValue(id, out fSYS)) {
+                fSYS = double.NaN;
+            }
+            if (!this._fGEN.TryGetValue(id, out fGEN)) {
+                fGEN = double.NaN;
+            }
+            if (!this._fART.TryGetValue(id, out fART)) {
+                fART = double.NaN;
+            }
+
+            bool hassGEN = false;
+            if (this._sGEN.TryGetValue(id, out hassGEN)) {
+                sGEN = hassGEN ? 1 : 0;
+            } else {
+                sGEN = double.NaN;
+            }
+            return new double[] { fSYS, _OV, fART, sGEN, fGEN };
         }
     }
 }

@@ -40,5 +40,10 @@ namespace jurbano.Allcea.Estimation
         {
             // Nothing to do
         }
+
+        public double[] Features(string query, string doc)
+        {
+            return new double[] { };
+        }
     }
 }
