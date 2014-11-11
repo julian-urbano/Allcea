@@ -162,7 +162,7 @@ namespace jurbano.Allcea.Cli
                 new Dictionary<string, Dictionary<string, Dictionary<string, RelativeEffectivenessEstimate>>>(); // [sysA [sysB [query rel]]]
             string[] allSystems = sqRuns.Keys.ToArray();
 
-            for (int i = 0; i < allSystems.Length - 1; i++) {
+            Parallel.For(0, allSystems.Length - 1, i => {
                 string sysA = allSystems[i];
                 var runsA = sqRuns[sysA];
                 Dictionary<string, Dictionary<string, RelativeEffectivenessEstimate>> sqRelEstimates = new Dictionary<string, Dictionary<string, RelativeEffectivenessEstimate>>();
@@ -175,8 +175,26 @@ namespace jurbano.Allcea.Cli
                     }
                     sqRelEstimates.Add(sysB, qRelEstimates);
                 }
-                ssqRelEstimates.Add(sysA, sqRelEstimates);
-            }
+                lock (ssqRelEstimates) {
+                    ssqRelEstimates.Add(sysA, sqRelEstimates);
+                }
+            });
+
+            //for (int i = 0; i < allSystems.Length - 1; i++) {
+            //    string sysA = allSystems[i];
+            //    var runsA = sqRuns[sysA];
+            //    Dictionary<string, Dictionary<string, RelativeEffectivenessEstimate>> sqRelEstimates = new Dictionary<string, Dictionary<string, RelativeEffectivenessEstimate>>();
+            //    for (int j = i + 1; j < allSystems.Length; j++) {
+            //        Dictionary<string, RelativeEffectivenessEstimate> qRelEstimates = new Dictionary<string, RelativeEffectivenessEstimate>();
+            //        string sysB = allSystems[j];
+            //        var runsB = sqRuns[sysB];
+            //        foreach (var qRun in runsA) {
+            //            qRelEstimates.Add(qRun.Key, measure.Estimate(qRun.Value, runsB[qRun.Key], relEstimator, confEstimator));
+            //        }
+            //        sqRelEstimates.Add(sysB, qRelEstimates);
+            //    }
+            //    ssqRelEstimates.Add(sysA, sqRelEstimates);
+            //}
             return ssqRelEstimates;
         }
         internal static List<RelativeEffectivenessEstimate> GetSortedMeanRelatives(

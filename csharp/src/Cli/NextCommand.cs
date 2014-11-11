@@ -173,6 +173,19 @@ namespace jurbano.Allcea.Cli
         internal static IEnumerable<List<RelevanceEstimate>> GetBatches(Dictionary<string, Dictionary<string, RelevanceEstimate>> qdEstimates, int numBatches, int batchSize)
         {
             List<List<RelevanceEstimate>> batches = new List<List<RelevanceEstimate>>();
+            //Parallel.ForEach(qdEstimates, dEstimates => {
+            //    string query = dEstimates.Key;
+            //    var sorted = dEstimates.Value.Select(w => w.Value).OrderByDescending(w => w.Weight).ToList();
+            //    int added = 0;
+            //    while (sorted.Count > 0 && added < numBatches) {
+            //        var next = sorted.Take(batchSize);
+            //        lock(batches)
+            //            batches.Add(new List<RelevanceEstimate>(next));
+            //        sorted.RemoveRange(0, next.Count());
+            //        added++;
+            //    }
+            //});
+
             foreach (var dEstimates in qdEstimates) {
                 string query = dEstimates.Key;
                 var sorted = dEstimates.Value.Select(w => w.Value).OrderByDescending(w => w.Weight).ToList();
