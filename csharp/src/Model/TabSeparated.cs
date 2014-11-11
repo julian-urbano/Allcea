@@ -43,15 +43,20 @@ namespace jurbano.Allcea.Model
 
         IEnumerable<Run> IReader<Run>.Read(TextReader tr)
         {
+            // Store all systems and queries to check completeness
+            HashSet<string> systems = new HashSet<string>();
+            HashSet<string> queries = new HashSet<string>();
+
             List<Run> runs = new List<Run>();
 
             string prevSystem = null;
             string prevQuery = null;
             List<string> prevDocs = new List<string>();
 
-            int lineNumber = 1;
+            int lineNumber = 0;
             string line = tr.ReadLine();
             while (line != null) {
+                lineNumber++;
                 string[] parts = line.Split('\t'); // system query doc
                 if (parts.Length != 3) {
                     throw new FormatException("line " + lineNumber + " is not well-formatted.");
@@ -60,11 +65,13 @@ namespace jurbano.Allcea.Model
                 string query = parts[1];
                 string doc = parts[2];
 
-                // If the query changes, add the previous run and start a new one
-                if (prevQuery == null || prevQuery != query) {
+                // If the query or system changes, add the previous run and start a new one
+                if (prevQuery == null || prevSystem == null || prevQuery != query || prevSystem != system) {
                     // Add the previous one only if it's not null (first query)
                     if (prevQuery != null) {
                         runs.Add(new Run(prevSystem, prevQuery, prevDocs));
+                        systems.Add(prevSystem);
+                        queries.Add(prevQuery);
                     }
                     prevSystem = system;
                     prevQuery = query;
@@ -73,11 +80,17 @@ namespace jurbano.Allcea.Model
                 prevDocs.Add(doc);
 
                 line = tr.ReadLine();
-                lineNumber++;
             }
             // In case no second run was read
             if (prevQuery != null) {
                 runs.Add(new Run(prevSystem, prevQuery, prevDocs));
+                systems.Add(prevSystem);
+                queries.Add(prevQuery);
+            }
+
+            // Check that runs are complete
+            if (lineNumber % systems.Count != 0 || lineNumber % queries.Count != 0) {
+                throw new FormatException("incomplete file, missing runs (" + systems.Count + " systems, " + queries.Count + " queries, " + lineNumber + " lines).");
             }
 
             return runs;
